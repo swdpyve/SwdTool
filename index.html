@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwdTool - 开发者工具集</title>
+    <style>
+        :root {
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --accent: #4f6ef7;
+            --accent-light: #eef1ff;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-hover: 0 10px 25px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
+            --transition: 0.2s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 导航栏 - 简洁风格 */
+        .navbar {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .navbar-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .navbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+        }
+        .navbar-logo .logo-mark {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .navbar-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        .navbar-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            transition: var(--transition);
+        }
+        .navbar-links a:hover {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .navbar-links a.active {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        /* 主内容区 */
+        .main-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 48px 24px;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* 标题区 */
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .page-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        .page-header p {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* 工具网格 */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .tool-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .tool-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+            border-color: #cbd5e1;
+        }
+        .tool-card .tool-icon {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+        .tool-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .tool-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* 空状态（暂时保留，如果 toolsData 为空则显示） */
+        .empty-placeholder {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px dashed var(--border);
+            color: var(--text-secondary);
+        }
+        .empty-placeholder .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.7;
+        }
+        .empty-placeholder h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .empty-placeholder p {
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .upcoming-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .upcoming-tag {
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            transition: var(--transition);
+        }
+        .upcoming-tag:hover {
+            background: #dde3ff;
+            border-color: var(--accent);
+        }
+
+        /* 页脚 */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 20px 24px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            background: var(--surface);
+        }
+        .footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            color: var(--accent);
+        }
+
+        /* 响应式 */
+        @media (max-width: 640px) {
+            .main-container {
+                padding: 32px 16px;
+            }
+            .page-header h1 {
+                font-size: 1.8rem;
+            }
+            .navbar-links a {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="navbar-logo">
+                <span class="logo-mark">Sw</span>
+                SwdTool
+            </a>
+            <ul class="navbar-links">
+                <li><a href="index.html" class="active">首页</a></li>
+                <li><a href="https://github.com" target="_blank" rel="noopener">GitHub ↗</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="main-container">
+        <div class="page-header">
+            <h1>开发者工具集</h1>
+            <p>轻量、便捷的在线工具，无需安装，即开即用。</p>
+        </div>
+
+        <!-- 工具卡片区域（动态渲染） -->
+        <div class="tools-grid" id="toolsGrid">
+            <!-- 动态插入工具卡片 -->
+        </div>
+
+        <!-- 空状态占位（暂无工具时显示） -->
+        <div class="empty-placeholder" id="emptyPlaceholder">
+            <div class="icon">📦</div>
+            <h2>暂无工具</h2>
+            <p>工具集正在建设中，以下功能即将上线</p>
+            <div class="upcoming-tags">
+                <span class="upcoming-tag">🔐 SHA-256 加密</span>
+                <span class="upcoming-tag">📝 Base64 编解码</span>
+                <span class="upcoming-tag">📋 JSON 格式化</span>
+                <span class="upcoming-tag">🔄 时间戳转换</span>
+                <span class="upcoming-tag">🎲 UUID 生成器</span>
+                <span class="upcoming-tag">🔑 MD5 哈希</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <span>© 2026 SwdTool</span>
+        <a href="#">隐私政策</a>
+        <a href="#">MIT License</a>
+        <span>为开发者而生</span>
+    </footer>
+
+    <script>
+        (function() {
+            // ========== 工具数据（添加新工具只需在此数组中增加对象） ==========
+            const toolsData = [
+                {
+                    id: 'base64',
+                    name: 'Base64 工具',
+                    description: '在线 Base64 编码与解码，支持 UTF-8 文本',
+                    category: 'encode',
+                    icon: '🔤',
+                    iconClass: 'encode',
+                    tags: ['Base64', '编码', '解码'],
+                    available: true,
+                    url: 'TexttoBase64.html'
+                }
+                // 后续工具继续在此添加...
+            ];
+
+            const toolsGrid = document.getElementById('toolsGrid');
+            const emptyPlaceholder = document.getElementById('emptyPlaceholder');
+
+            function renderTools() {
+                if (toolsData.length === 0) {
+                    toolsGrid.innerHTML = '';
+                    toolsGrid.style.display = 'none';
+                    emptyPlaceholder.style.display = 'block';
+                    return;
+                }
+
+                toolsGrid.style.display = 'grid';
+                emptyPlaceholder.style.display = 'none';
+                toolsGrid.innerHTML = toolsData.map(tool => {
+                    return `
+                        <a href="${tool.url}" class="tool-card">
+                            <div class="tool-icon">${tool.icon}</div>
+                            <h3>${tool.name}</h3>
+                            <p>${tool.description}</p>
+                        </a>
+                    `;
+                }).join('');
+            }
+
+            // 初始渲染
+            renderTools();
+
+            // 点击即将推出的标签给予友好反馈（保留）
+            emptyPlaceholder.addEventListener('click', (e) => {
+                const tag = e.target.closest('.upcoming-tag');
+                if (tag) {
+                    const text = tag.textContent.trim();
+                    alert(`✨ "${text}" 即将推出，敬请期待！`);
+                }
+            });
+
+            console.log('🛠️ SwdTool 已就绪，当前工具数量：' + toolsData.length);
+            console.log('💡 在 toolsData 数组中添加对象即可扩展更多工具');
+        })();
+    </script>
+</body>
+</html>
