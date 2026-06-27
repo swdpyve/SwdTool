@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS 代码混淆加密 - SwdTool</title>
+    <link rel="icon" href="logo.ico" sizes="any">
+    <style>
+        :root {
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1e293b;
+            --text2: #64748b;
+            --muted: #94a3b8;
+            --accent: #4f6ef7;
+            --accent-light: #eef1ff;
+            --green: #10b981;
+            --red: #ef4444;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --transition: 0.2s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
+        .navbar{backdrop-filter:blur(12px);background:rgba(255,255,255,0.8);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+        .navbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:1.2rem}
+        .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+        .nav-links{display:flex;gap:8px;list-style:none}
+        .nav-links a{text-decoration:none;color:var(--text2);font-size:0.9rem;padding:6px 14px;border-radius:20px;transition:var(--transition)}
+        .nav-links a:hover{background:var(--accent-light);color:var(--accent)}
+        .container{max-width:1200px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
+        .header{text-align:center;margin-bottom:32px}
+        .header h1{font-size:2rem;font-weight:700}
+        .header p{color:var(--text2)}
+        .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+        .tab-btn{padding:8px 16px;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text2);font-size:0.85rem;cursor:pointer;transition:var(--transition);font-weight:500}
+        .tab-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+        .tab-panel{display:none}
+        .tab-panel.active{display:block}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
+        textarea{width:100%;padding:14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Fira Code',monospace;font-size:0.9rem;line-height:1.5;resize:vertical;min-height:200px;background:var(--bg);color:var(--text)}
+        textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,110,247,0.12);background:var(--surface)}
+        textarea[readonly]{background:#f1f5f9}
+        .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:var(--transition);min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+        .upload-area:hover,.upload-area.dragover{border-color:var(--accent);background:var(--accent-light)}
+        .upload-area input[type=file]{display:none}
+        .btn-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+        .btn{padding:10px 22px;border-radius:24px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,0.25);white-space:nowrap}
+        .btn:hover{background:#3d5ce5;box-shadow:0 4px 12px rgba(79,110,247,0.35)}
+        .btn:active{transform:scale(0.97)}
+        .btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:none}
+        .btn-outline:hover{background:#f1f5f9}
+        .btn-green{background:var(--green);box-shadow:0 2px 8px rgba(16,185,129,0.25)}
+        .btn-green:hover{background:#059669}
+        .btn-green.copied{background:#065f46;pointer-events:none}
+        .options{margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+        .options label{font-weight:500;font-size:0.9rem;display:flex;align-items:center;gap:6px}
+        .options input[type=checkbox]{width:16px;height:16px}
+        .options input[type=text]{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;width:200px}
+        .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto}
+        .footer a{color:var(--text2);text-decoration:none}
+        .footer a:hover{color:var(--accent)}
+        @media(max-width:640px){.container{padding:24px 16px}}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="logo"><span class="logo-mark">Sw</span>SwdTool</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="https://github.com" target="_blank">GitHub ↗</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ 高级 JS 代码混淆加密</h1>
+            <p>变量混淆 · 字符串加密 · 控制流扁平化 · 死代码注入 · 调试保护 · 域名锁定</p>
+        </div>
+
+        <div class="tabs" id="inputTabs">
+            <button class="tab-btn active" data-tab="code">✍️ 代码输入</button>
+            <button class="tab-btn" data-tab="file">📂 文件上传</button>
+        </div>
+
+        <div class="tab-panel active" id="panel-code">
+            <div class="card">
+                <textarea id="codeInput" placeholder="在此粘贴 JavaScript 代码..."></textarea>
+            </div>
+        </div>
+
+        <div class="tab-panel" id="panel-file">
+            <div class="card">
+                <div class="upload-area" id="dropZone">
+                    <div style="font-size:2rem">📁</div>
+                    <strong>点击选择 .js 文件</strong> 或拖拽到此处
+                    <span style="color:var(--muted)">最大 10MB</span>
+                    <input type="file" id="fileInput" accept=".js">
+                </div>
+                <div id="fileName" style="margin-top:8px;color:var(--text2);font-size:0.9rem"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom:12px">⚙️ 混淆选项</h3>
+            <div class="options">
+                <label><input type="checkbox" id="optDomain" checked> 域名锁定</label>
+                <input type="text" id="domainInput" placeholder="your-domain.com" value="example.com">
+                <label><input type="checkbox" id="optDebug" checked> 调试保护</label>
+                <label><input type="checkbox" id="optDeadCode" checked> 死代码注入</label>
+                <label><input type="checkbox" id="optFlatten" checked> 控制流扁平化</label>
+            </div>
+            <div class="btn-group">
+                <button class="btn" id="obfuscateBtn">⚡ 开始混淆</button>
+                <button class="btn btn-outline" id="exampleBtn">💡 查看示例</button>
+                <button class="btn btn-outline" id="clearBtn">🗑️ 清空</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <label>🔐 混淆结果（单行压缩）</label>
+            <textarea id="outputArea" readonly placeholder="混淆后的代码将显示在此处..." style="min-height:200px"></textarea>
+            <div class="btn-group">
+                <button class="btn btn-green" id="copyBtn">📋 复制结果</button>
+                <button class="btn btn-outline" id="downloadBtn">💾 下载 obfuscated.js</button>
+            </div>
+            <p style="margin-top:8px;color:var(--muted);font-size:0.8rem">🔒 所有混淆均在浏览器本地完成，代码不会上传</p>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <span>© 2026 SwdTool</span>
+        <a href="index.html">返回首页</a>
+    </footer>
+
+    <script>
+        (function() {
+            // DOM元素
+            const codeInput = document.getElementById('codeInput');
+            const outputArea = document.getElementById('outputArea');
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const fileName = document.getElementById('fileName');
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const panels = document.querySelectorAll('.tab-panel');
+            const obfuscateBtn = document.getElementById('obfuscateBtn');
+            const exampleBtn = document.getElementById('exampleBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const optDomain = document.getElementById('optDomain');
+            const domainInput = document.getElementById('domainInput');
+            const optDebug = document.getElementById('optDebug');
+            const optDeadCode = document.getElementById('optDeadCode');
+            const optFlatten = document.getElementById('optFlatten');
+
+            let currentCode = '';
+
+            // 示例代码
+            const exampleCode = `// 示例：计算购物车总价
+function calculateTotal(items, discount) {
+    let total = 0;
+    for (let i = 0; i < items.length; i++) {
+        total += items[i].price * items[i].quantity;
+    }
+    if (discount > 0) {
+        total = total * (1 - discount);
+    }
+    return total.toFixed(2);
+}
+var cart = [{price: 29.9, quantity: 2}, {price: 89, quantity: 1}];
+console.log("总价: " + calculateTotal(cart, 0.1));`;
+
+            // 选项卡切换
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    panels.forEach(p => p.classList.remove('active'));
+                    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+                });
+            });
+
+            // 文件上传
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', e => { if(e.target.files.length) handleFile(e.target.files[0]); });
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+            });
+
+            function handleFile(file) {
+                if(!file.name.endsWith('.js')) { alert('请选择 .js 文件'); return; }
+                if(file.size > 10*1024*1024) { alert('文件不能超过10MB'); return; }
+                fileName.textContent = `已选择：${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+                const reader = new FileReader();
+                reader.onload = e => { currentCode = e.target.result; codeInput.value = currentCode; };
+                reader.readAsText(file);
+            }
+
+            // ---------- 高级混淆引擎 ----------
+            function randomId(len = 6) {
+                const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let id = '';
+                for(let i=0; i<len; i++) id += chars[Math.floor(Math.random()*chars.length)];
+                return id;
+            }
+
+            function obfuscateAdvanced(source, options) {
+                if(!source.trim()) return '';
+                
+                // 1. 去除注释和多余空白（简单压缩）
+                let code = source.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '').replace(/^\s*\n/gm, '');
+                
+                // 2. 字符串加密：提取字符串字面量，用XOR+Base64双层加密
+                const stringMap = new Map();
+                let strIdx = 0;
+                code = code.replace(/'[^']*'|"[^"]*"|`[^`]*`/g, match => {
+                    const key = `_S${strIdx++}_`;
+                    let inner = match.slice(1, -1);
+                    // 处理转义
+                    inner = inner.replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+                    stringMap.set(key, inner);
+                    return key;
+                });
+
+                // 生成字符串解密函数和加密数组
+                const stringPairs = Array.from(stringMap.entries());
+                const encodedStrings = stringPairs.map(([_, val]) => {
+                    // XOR 简单加密: 每个字符与密钥异或
+                    const key = Math.floor(Math.random()*255)+1;
+                    let enc = btoa(unescape(encodeURIComponent(val)));
+                    // 再对base64字符串进行XOR
+                    const xorEnc = enc.split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ key)).join('');
+                    return { xor: btoa(xorEnc), key: key };
+                });
+                // 生成密钥数组和解码函数
+                const decodeFuncName = '_d' + randomId(4);
+                const decodeFunc = `function ${decodeFuncName}(i,k){var s=atob(i).split('').map(function(c){return String.fromCharCode(c.charCodeAt(0)^k);}).join('');return decodeURIComponent(escape(atob(s)));}`;
+                
+                // 替换占位符为解码调用
+                stringPairs.forEach(([key, _], index) => {
+                    const enc = encodedStrings[index];
+                    code = code.replace(new RegExp(key, 'g'), `${decodeFuncName}('${enc.xor}',${enc.key})`);
+                });
+
+                // 3. 变量名混淆：收集局部变量并替换
+                const varMap = new Map();
+                let varCount = 0;
+                // 匹配 var/let/const 声明
+                code = code.replace(/\b(var|let|const)\s+([a-zA-Z_$][\w$]*)/g, (_, kw, name) => {
+                    if (!varMap.has(name)) {
+                        varMap.set(name, '_' + (varCount++).toString(36));
+                    }
+                    return kw + ' ' + varMap.get(name);
+                });
+                // 替换变量引用
+                varMap.forEach((newName, oldName) => {
+                    const regex = new RegExp('\\b' + oldName + '\\b', 'g');
+                    code = code.replace(regex, newName);
+                });
+
+                // 4. 控制流扁平化 (可选)
+                if (options.flatten && code.includes('\n')) {
+                    const lines = code.split('\n').filter(l => l.trim());
+                    if (lines.length > 2) {
+                        const states = lines.map((line, i) => `case ${i}:${line};state=${i+1};break;`);
+                        code = `(function(){var state=0;while(1){switch(state){${states.join('')}default:return;}}})();`;
+                    }
+                }
+
+                // 5. 死代码注入 (可选)
+                let deadCodeStr = '';
+                if (options.deadCode) {
+                    deadCodeStr = [
+                        `;var _${randomId(4)}=function(){if(false){console.log('dead');}};`,
+                        `;if(0){var _${randomId(4)}={};}`,
+                        `;while(0){break;}`
+                    ].join('');
+                }
+
+                // 6. 调试保护 (可选)
+                let debugStr = '';
+                if (options.debugProtect) {
+                    debugStr = `
+;setInterval(function(){try{(function(){return new Error();})().stack.includes('toString')&&debugger;}catch(e){}},1000);
+(function(){var s=Date.now();debugger;var e=Date.now();if(e-s>100){while(1){debugger;}}})();
+                    `;
+                }
+
+                // 7. 域名锁定 (可选)
+                let domainLock = '';
+                if (options.domainLock && options.domain) {
+                    domainLock = `
+;if(typeof window!=='undefined'&&window.location&&window.location.hostname!=='${options.domain}'){window.location.href='about:blank';}
+                    `;
+                }
+
+                // 组合最终代码
+                let result = `${decodeFunc};${deadCodeStr}${debugStr}${domainLock}${code}`;
+                // 压缩为单行，移除多余空格
+                result = result.replace(/\s+/g, ' ').trim();
+                return result;
+            }
+
+            // 执行混淆
+            function performObfuscation() {
+                const source = codeInput.value.trim() || currentCode;
+                if (!source) { alert('请先输入或上传代码'); return; }
+                
+                const options = {
+                    domainLock: optDomain.checked,
+                    domain: domainInput.value.trim(),
+                    debugProtect: optDebug.checked,
+                    deadCode: optDeadCode.checked,
+                    flatten: optFlatten.checked
+                };
+
+                try {
+                    const obfuscated = obfuscateAdvanced(source, options);
+                    outputArea.value = obfuscated;
+                } catch (e) {
+                    alert('混淆出错：' + e.message);
+                }
+            }
+
+            // 事件绑定
+            obfuscateBtn.addEventListener('click', performObfuscation);
+            exampleBtn.addEventListener('click', () => {
+                codeInput.value = exampleCode;
+                currentCode = exampleCode;
+                document.querySelector('.tab-btn[data-tab="code"]').click();
+                performObfuscation();
+            });
+            clearBtn.addEventListener('click', () => {
+                codeInput.value = '';
+                outputArea.value = '';
+                currentCode = '';
+                fileName.textContent = '';
+                fileInput.value = '';
+            });
+
+            copyBtn.addEventListener('click', async () => {
+                if (!outputArea.value) { alert('没有可复制的结果'); return; }
+                try {
+                    await navigator.clipboard.writeText(outputArea.value);
+                    copyBtn.innerHTML = '✅ 已复制';
+                    copyBtn.classList.add('copied');
+                    setTimeout(() => { copyBtn.innerHTML = '📋 复制结果'; copyBtn.classList.remove('copied'); }, 2000);
+                } catch {
+                    outputArea.select();
+                    document.execCommand('copy');
+                    alert('已复制到剪贴板');
+                }
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                if (!outputArea.value) { alert('没有可下载的内容'); return; }
+                const blob = new Blob([outputArea.value], { type: 'application/javascript' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'obfuscated.js';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+
+            // Ctrl+Enter 快捷混淆
+            document.addEventListener('keydown', e => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    performObfuscation();
+                }
+            });
+
+            console.log('🛡️ 高级JS混淆引擎已加载');
+        })();
+    </script>
+</body>
+</html>
