@@ -25,11 +25,7 @@
             color: var(--text-primary);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             background-color: var(--bg);
@@ -307,6 +303,13 @@
                     description: '将文本转换为 MD5 哈希值，支持32/16位大小写',
                     icon: '🔐',
                     url: 'MD5text.html'
+                },
+                {
+                    id: 'obfuscator',
+                    name: 'JS 代码混淆',
+                    description: '高级混淆加密，变量名混淆、字符串加密、控制流扁平化、调试保护',
+                    icon: '🛡️',
+                    url: 'JSobfuscator.html'
                 }
             ];
 
@@ -336,7 +339,6 @@
 
             renderTools();
 
-            // 预留：将来为即将推出标签添加反馈
             emptyPlaceholder.addEventListener('click', (e) => {
                 const tag = e.target.closest('.upcoming-tag');
                 if (tag) {
