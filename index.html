@@ -38,7 +38,6 @@
             flex-direction: column;
         }
 
-        /* 导航栏 - 简洁风格 */
         .navbar {
             background: rgba(255,255,255,0.8);
             backdrop-filter: blur(12px);
@@ -103,7 +102,6 @@
             color: var(--accent);
         }
 
-        /* 主内容区 */
         .main-container {
             max-width: 1100px;
             margin: 0 auto;
@@ -112,7 +110,6 @@
             width: 100%;
         }
 
-        /* 标题区 */
         .page-header {
             text-align: center;
             margin-bottom: 48px;
@@ -131,7 +128,6 @@
             margin: 0 auto;
         }
 
-        /* 工具网格 */
         .tools-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -172,7 +168,6 @@
             line-height: 1.5;
         }
 
-        /* 空状态（暂时保留，如果 toolsData 为空则显示） */
         .empty-placeholder {
             text-align: center;
             padding: 60px 20px;
@@ -217,7 +212,6 @@
             border-color: var(--accent);
         }
 
-        /* 页脚 */
         .footer {
             border-top: 1px solid var(--border);
             padding: 20px 24px;
@@ -238,7 +232,6 @@
             color: var(--accent);
         }
 
-        /* 响应式 */
         @media (max-width: 640px) {
             .main-container {
                 padding: 32px 16px;
@@ -254,7 +247,6 @@
     </style>
 </head>
 <body>
-    <!-- 导航栏 -->
     <nav class="navbar">
         <div class="navbar-inner">
             <a href="index.html" class="navbar-logo">
@@ -268,20 +260,15 @@
         </div>
     </nav>
 
-    <!-- 主内容 -->
     <main class="main-container">
         <div class="page-header">
             <h1>开发者工具集</h1>
             <p>轻量、便捷的在线工具，无需安装，即开即用。</p>
         </div>
 
-        <!-- 工具卡片区域（动态渲染） -->
-        <div class="tools-grid" id="toolsGrid">
-            <!-- 动态插入工具卡片 -->
-        </div>
+        <div class="tools-grid" id="toolsGrid"></div>
 
-        <!-- 空状态占位（暂无工具时显示） -->
-        <div class="empty-placeholder" id="emptyPlaceholder">
+        <div class="empty-placeholder" id="emptyPlaceholder" style="display: none;">
             <div class="icon">📦</div>
             <h2>暂无工具</h2>
             <p>工具集正在建设中，以下功能即将上线</p>
@@ -296,7 +283,6 @@
         </div>
     </main>
 
-    <!-- 页脚 -->
     <footer class="footer">
         <span>© 2026 SwdTool</span>
         <a href="#">隐私政策</a>
@@ -306,20 +292,22 @@
 
     <script>
         (function() {
-            // ========== 工具数据（添加新工具只需在此数组中增加对象） ==========
+            // 工具数据 —— 在此添加新工具
             const toolsData = [
                 {
                     id: 'base64',
                     name: 'Base64 工具',
                     description: '在线 Base64 编码与解码，支持 UTF-8 文本',
-                    category: 'encode',
                     icon: '🔤',
-                    iconClass: 'encode',
-                    tags: ['Base64', '编码', '解码'],
-                    available: true,
                     url: 'TexttoBase64.html'
+                },
+                {
+                    id: 'md5',
+                    name: 'MD5 加密',
+                    description: '将文本转换为 MD5 哈希值，支持32/16位大小写',
+                    icon: '🔐',
+                    url: 'MD5text.html'
                 }
-                // 后续工具继续在此添加...
             ];
 
             const toolsGrid = document.getElementById('toolsGrid');
@@ -346,20 +334,17 @@
                 }).join('');
             }
 
-            // 初始渲染
             renderTools();
 
-            // 点击即将推出的标签给予友好反馈（保留）
+            // 预留：将来为即将推出标签添加反馈
             emptyPlaceholder.addEventListener('click', (e) => {
                 const tag = e.target.closest('.upcoming-tag');
                 if (tag) {
-                    const text = tag.textContent.trim();
-                    alert(`✨ "${text}" 即将推出，敬请期待！`);
+                    alert(`✨ "${tag.textContent.trim()}" 即将推出，敬请期待！`);
                 }
             });
 
             console.log('🛠️ SwdTool 已就绪，当前工具数量：' + toolsData.length);
-            console.log('💡 在 toolsData 数组中添加对象即可扩展更多工具');
         })();
     </script>
 </body>
