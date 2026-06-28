@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIP在线解压 - SwdTool</title>
+    <link rel="icon" href="logo.ico" sizes="any">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1e293b;
+            --text2: #64748b;
+            --muted: #94a3b8;
+            --accent: #4f6ef7;
+            --accent-light: #eef1ff;
+            --green: #10b981;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --transition: 0.2s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+        }
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2f3d;
+            --text: #e4e6ed;
+            --text2: #8b8fa7;
+            --muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-light: rgba(108,140,255,0.12);
+            --green: #10b981;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;transition:background-color 0.3s}
+        .navbar{backdrop-filter:blur(12px);background:rgba(255,255,255,0.8);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;transition:background 0.3s}
+        [data-theme="dark"] .navbar{background:rgba(15,17,23,0.8)}
+        .navbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:1.2rem}
+        .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+        .nav-links{display:flex;gap:8px;list-style:none;align-items:center}
+        .nav-links a{text-decoration:none;color:var(--text2);font-size:0.9rem;padding:6px 14px;border-radius:20px;transition:var(--transition)}
+        .nav-links a:hover{background:var(--accent-light);color:var(--accent)}
+        .theme-toggle{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text);transition:var(--transition)}
+        .theme-toggle:hover{background:var(--accent-light);border-color:var(--accent)}
+        .container{max-width:960px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
+        .header{text-align:center;margin-bottom:32px}
+        .header h1{font-size:2rem;font-weight:700}
+        .header p{color:var(--text2)}
+        .upload-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:var(--transition);margin-bottom:24px;box-shadow:var(--shadow)}
+        .upload-card:hover,.upload-card.dragover{border-color:var(--accent);background:var(--accent-light)}
+        .upload-icon{font-size:2.8rem;margin-bottom:12px}
+        .upload-card input[type=file]{display:none}
+        .file-list-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
+        .table-wrapper{overflow-x:auto}
+        table{width:100%;border-collapse:collapse;font-size:0.9rem}
+        th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--text2);font-weight:600}
+        td{padding:8px;border-bottom:1px solid var(--border);color:var(--text)}
+        .btn{padding:10px 22px;border-radius:24px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,0.25)}
+        .btn:hover{background:#3d5ce5;box-shadow:0 4px 12px rgba(79,110,247,0.35)}
+        [data-theme="dark"] .btn:hover{background:#5b7ef5}
+        .btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:none}
+        .btn-outline:hover{background:#f1f5f9}
+        [data-theme="dark"] .btn-outline:hover{background:rgba(255,255,255,0.05)}
+        .btn-download{background:var(--green);color:#fff;padding:4px 14px;font-size:0.8rem;border-radius:16px;border:none;cursor:pointer;transition:var(--transition);text-decoration:none;display:inline-block}
+        .btn-download:hover{background:#059669}
+        .btn-group{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+        .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto;transition:background 0.3s}
+        .footer a{color:var(--text2);text-decoration:none}
+        .empty-message{text-align:center;color:var(--muted);padding:32px 0}
+        @media(max-width:640px){.container{padding:24px 16px}}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="logo"><span class="logo-mark">Sw</span>SwdTool</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式">🌙</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="header">
+            <h1>📂 ZIP 文件在线解压</h1>
+            <p>上传ZIP包 · 预览文件列表 · 单独下载 · 本地处理无上传</p>
+        </div>
+
+        <!-- 上传区域 -->
+        <div class="upload-card" id="dropZone">
+            <div class="upload-icon">📁</div>
+            <strong style="display:block;margin-bottom:6px;">点击选择 ZIP 文件或拖拽到此处</strong>
+            <span style="color:var(--muted);font-size:0.9rem;">自动解析包内容，支持单独下载文件</span>
+            <input type="file" id="fileInput" accept=".zip">
+        </div>
+
+        <!-- 文件列表 -->
+        <div class="file-list-card">
+            <h3 style="margin-bottom:16px;">ZIP 包内容（<span id="fileCount">0</span> 个文件）</h3>
+            <div class="table-wrapper">
+                <table id="fileTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>文件名</th>
+                            <th>修改时间</th>
+                            <th>大小</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileTableBody">
+                        <tr><td colspan="5" class="empty-message">尚未选择 ZIP 文件</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="btn-group">
+            <button class="btn btn-outline" id="clearBtn">🗑️ 清空数据</button>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="file-list-card" style="margin-top:30px;">
+            <h3 style="margin-bottom:12px;">📖 使用说明</h3>
+            <ul style="color:var(--text2);padding-left:20px;font-size:0.9rem;list-style-type:none;">
+                <li>📂 <strong>选择ZIP文件</strong> – 上传 ZIP 包后自动展示内部文件列表，无需解压即可预览。</li>
+                <li>⬇️ <strong>单独下载文件</strong> – 点击列表中的“下载”按钮即可提取并下载单个文件。</li>
+                <li>🗑️ <strong>清空数据</strong> – 一键清除当前 ZIP 内容，页面恢复初始状态。</li>
+                <li>🔒 <strong>完全本地</strong> – 文件不会上传到任何服务器，所有解析和下载均在浏览器中完成。</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span>© 2026 SwdTool</span>
+        <a href="index.html">返回首页</a>
+    </footer>
+
+    <script>
+        (function() {
+            // 主题切换
+            const themeToggle = document.getElementById('themeToggle');
+            const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const applyTheme = (t) => {
+                document.documentElement.setAttribute('data-theme', t);
+                themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+                localStorage.setItem('swdtool-theme', t);
+            };
+            applyTheme(getTheme());
+            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
+
+            // ZIP解压核心逻辑
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const fileTableBody = document.getElementById('fileTableBody');
+            const fileCountSpan = document.getElementById('fileCount');
+            const clearBtn = document.getElementById('clearBtn');
+
+            let zipEntries = []; // 存储解析出的文件信息 { name, blob, date, size }
+
+            // 格式化文件大小
+            function formatSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            }
+
+            // 渲染文件列表
+            function renderFileList() {
+                fileCountSpan.textContent = zipEntries.length;
+
+                if (zipEntries.length === 0) {
+                    fileTableBody.innerHTML = '<tr><td colspan="5" class="empty-message">尚未选择 ZIP 文件</td></tr>';
+                    return;
+                }
+
+                fileTableBody.innerHTML = zipEntries.map((entry, index) => {
+                    const dateStr = entry.date ? entry.date.toLocaleString('zh-CN') : '—';
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td title="${entry.name}">${entry.name.length > 40 ? entry.name.substring(0,40)+'…' : entry.name}</td>
+                            <td>${dateStr}</td>
+                            <td>${formatSize(entry.size)}</td>
+                            <td><button class="btn-download" onclick="downloadEntry(${index})">⬇️ 下载</button></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // 下载单个文件
+            window.downloadEntry = function(index) {
+                const entry = zipEntries[index];
+                if (!entry || !entry.blob) return;
+                const url = URL.createObjectURL(entry.blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = entry.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            // 处理上传的ZIP文件
+            async function handleZipFile(file) {
+                if (!file.name.toLowerCase().endsWith('.zip')) {
+                    alert('请选择 ZIP 文件');
+                    return;
+                }
+                try {
+                    const zip = await JSZip.loadAsync(file);
+                    const entries = [];
+                    const promises = [];
+                    zip.forEach((relativePath, zipEntry) => {
+                        // 跳过目录
+                        if (zipEntry.dir) return;
+                        const promise = zipEntry.async('blob').then(blob => {
+                            entries.push({
+                                name: relativePath,
+                                blob: blob,
+                                date: zipEntry.date,
+                                size: blob.size
+                            });
+                        });
+                        promises.push(promise);
+                    });
+                    await Promise.all(promises);
+                    // 按文件名排序
+                    entries.sort((a, b) => a.name.localeCompare(b.name));
+                    zipEntries = entries;
+                    renderFileList();
+                } catch (err) {
+                    alert('解析 ZIP 文件失败：' + err.message);
+                    console.error(err);
+                }
+            }
+
+            // 事件绑定
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleZipFile(e.target.files[0]);
+                    fileInput.value = '';
+                }
+            });
+
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length) {
+                    const file = files[0];
+                    if (file.name.toLowerCase().endsWith('.zip')) {
+                        handleZipFile(file);
+                    } else {
+                        alert('请拖拽 ZIP 文件');
+                    }
+                }
+            });
+
+            clearBtn.addEventListener('click', () => {
+                zipEntries = [];
+                renderFileList();
+            });
+
+            // 初始渲染
+            renderFileList();
+            console.log('📂 ZIP在线解压工具已就绪');
+        })();
+    </script>
+</body>
+</html>
