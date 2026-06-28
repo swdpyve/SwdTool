@@ -6,7 +6,6 @@
     <title>SwdTool - 开发者工具集</title>
     <link rel="icon" href="logo.ico" sizes="any">
     <style>
-        /* ========== 亮色主题（默认） ========== */
         :root {
             --bg: #f8f9fc;
             --surface: #ffffff;
@@ -16,19 +15,18 @@
             --text-muted: #94a3b8;
             --accent: #4f6ef7;
             --accent-light: #eef1ff;
-            --accent-hover: #3d5ce5;
-            --btn-outline-hover: #f1f5f9;
-            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-hover: 0 10px 25px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
-            --navbar-bg: rgba(255,255,255,0.8);
             --radius: 12px;
             --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-hover: 0 10px 25px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
             --transition: 0.2s ease;
             --toggle-bg: #e5e7eb;
             --toggle-dot: #ffffff;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            line-height: 1.5;
+            color: var(--text-primary);
         }
 
-        /* ========== 暗色主题 ========== */
         [data-theme="dark"] {
             --bg: #0f1117;
             --surface: #1a1d27;
@@ -38,11 +36,8 @@
             --text-muted: #5c6078;
             --accent: #6c8cff;
             --accent-light: rgba(108, 140, 255, 0.12);
-            --accent-hover: #5b7ef5;
-            --btn-outline-hover: rgba(255,255,255,0.05);
             --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.03) inset;
             --shadow-hover: 0 10px 25px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.05) inset;
-            --navbar-bg: rgba(15,17,23,0.8);
             --toggle-bg: #3a4060;
             --toggle-dot: #6c8cff;
         }
@@ -54,15 +49,11 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            line-height: 1.5;
-            color: var(--text-primary);
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* 导航栏 */
         .navbar {
-            background: var(--navbar-bg);
+            background: rgba(255,255,255,0.8);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
@@ -71,6 +62,7 @@
             z-index: 50;
             transition: background 0.3s ease, border-color 0.3s ease;
         }
+        [data-theme="dark"] .navbar { background: rgba(15,17,23,0.8); }
         .navbar-inner {
             max-width: 1100px;
             margin: 0 auto;
@@ -119,16 +111,9 @@
             border-radius: 20px;
             transition: var(--transition);
         }
-        .navbar-links a:hover {
-            background: var(--accent-light);
-            color: var(--accent);
-        }
-        .navbar-links a.active {
-            background: var(--accent-light);
-            color: var(--accent);
-        }
+        .navbar-links a:hover { background: var(--accent-light); color: var(--accent); }
+        .navbar-links a.active { background: var(--accent-light); color: var(--accent); }
 
-        /* 主题切换按钮 */
         .theme-toggle {
             width: 38px;
             height: 38px;
@@ -142,14 +127,9 @@
             font-size: 1.1rem;
             transition: var(--transition);
             color: var(--text-primary);
-            flex-shrink: 0;
         }
-        .theme-toggle:hover {
-            background: var(--accent-light);
-            border-color: var(--accent);
-        }
+        .theme-toggle:hover { background: var(--accent-light); border-color: var(--accent); }
 
-        /* 主容器 */
         .main-container {
             max-width: 1100px;
             margin: 0 auto;
@@ -160,7 +140,7 @@
 
         .page-header {
             text-align: center;
-            margin-bottom: 48px;
+            margin-bottom: 40px;
         }
         .page-header h1 {
             font-size: 2.2rem;
@@ -178,9 +158,42 @@
             transition: color 0.3s ease;
         }
 
+        /* 搜索栏 */
+        .search-wrapper {
+            max-width: 520px;
+            margin: 0 auto 32px;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 44px;
+            border-radius: 28px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+        }
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+
         .tools-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 16px;
             margin-bottom: 32px;
         }
@@ -193,10 +206,10 @@
             text-decoration: none;
             color: inherit;
             box-shadow: var(--shadow);
-            transition: var(--transition), background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            transition: var(--transition), background-color 0.3s ease, border-color 0.3s ease;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             cursor: pointer;
         }
         .tool-card:hover {
@@ -204,72 +217,39 @@
             transform: translateY(-2px);
             border-color: var(--accent);
         }
-        .tool-card .tool-icon {
-            font-size: 1.8rem;
-            margin-bottom: 4px;
+        .tool-card .tool-icon { font-size: 1.8rem; margin-bottom: 2px; }
+        .tool-card h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); transition: color 0.3s ease; }
+        .tool-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+        .tool-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: auto;
         }
-        .tool-card h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            transition: color 0.3s ease;
-        }
-        .tool-card p {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            transition: color 0.3s ease;
+        .tool-tag {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 14px;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 500;
+            border: 1px solid transparent;
+            white-space: nowrap;
         }
 
-        /* 空状态 */
-        .empty-placeholder {
+        .empty-state {
             text-align: center;
             padding: 60px 20px;
             background: var(--surface);
             border-radius: var(--radius);
             border: 1px dashed var(--border);
             color: var(--text-secondary);
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
-        .empty-placeholder .icon {
-            font-size: 3rem;
-            margin-bottom: 16px;
-            opacity: 0.7;
-        }
-        .empty-placeholder h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-            transition: color 0.3s ease;
-        }
-        .empty-placeholder p {
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-        .upcoming-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-        }
-        .upcoming-tag {
-            background: var(--accent-light);
-            color: var(--accent);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            border: 1px solid transparent;
-            transition: var(--transition);
-        }
-        .upcoming-tag:hover {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.7; }
+        .empty-state h2 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+        .empty-state p { margin-bottom: 16px; font-size: 0.9rem; }
 
-        /* 页脚 */
         .footer {
             border-top: 1px solid var(--border);
             padding: 20px 24px;
@@ -281,28 +261,14 @@
             gap: 16px;
             flex-wrap: wrap;
             background: var(--surface);
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
-        .footer a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-        .footer a:hover {
-            color: var(--accent);
-        }
+        .footer a { color: var(--text-secondary); text-decoration: none; transition: color 0.3s ease; }
+        .footer a:hover { color: var(--accent); }
 
         @media (max-width: 640px) {
-            .main-container {
-                padding: 32px 16px;
-            }
-            .page-header h1 {
-                font-size: 1.8rem;
-            }
-            .navbar-links a {
-                padding: 6px 10px;
-                font-size: 0.8rem;
-            }
+            .main-container { padding: 32px 16px; }
+            .page-header h1 { font-size: 1.8rem; }
         }
     </style>
 </head>
@@ -316,9 +282,7 @@
             <ul class="navbar-links">
                 <li><a href="index.html" class="active">首页</a></li>
                 <li>
-                    <button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式" aria-label="切换主题">
-                        🌙
-                    </button>
+                    <button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式" aria-label="切换主题">🌙</button>
                 </li>
             </ul>
         </div>
@@ -330,20 +294,18 @@
             <p>轻量、便捷的在线工具，无需安装，即开即用。</p>
         </div>
 
+        <!-- 搜索栏 -->
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="搜索工具名称、描述或标签..." autocomplete="off">
+        </div>
+
         <div class="tools-grid" id="toolsGrid"></div>
 
-        <div class="empty-placeholder" id="emptyPlaceholder" style="display: none;">
-            <div class="icon">📦</div>
-            <h2>暂无工具</h2>
-            <p>工具集正在建设中，以下功能即将上线</p>
-            <div class="upcoming-tags">
-                <span class="upcoming-tag">🔐 SHA-256 加密</span>
-                <span class="upcoming-tag">📝 Base64 编解码</span>
-                <span class="upcoming-tag">📋 JSON 格式化</span>
-                <span class="upcoming-tag">🔄 时间戳转换</span>
-                <span class="upcoming-tag">🎲 UUID 生成器</span>
-                <span class="upcoming-tag">🔑 MD5 哈希</span>
-            </div>
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="icon">🔍</div>
+            <h2>未找到匹配的工具</h2>
+            <p>尝试其他关键词或清空搜索查看全部工具</p>
         </div>
     </main>
 
@@ -356,46 +318,14 @@
 
     <script>
         (function() {
-            // ========== 工具数据 ==========
-            const toolsData = [
-                {
-                    id: 'base64',
-                    name: 'Base64 工具',
-                    description: '在线 Base64 编码与解码，支持 UTF-8 文本',
-                    icon: '🔤',
-                    url: 'TexttoBase64.html'
-                },
-                {
-                    id: 'md5',
-                    name: 'MD5 加密',
-                    description: '将文本转换为 MD5 哈希值，支持32/16位大小写',
-                    icon: '🔐',
-                    url: 'MD5text.html'
-                },
-                {
-                    id: 'obfuscator',
-                    name: 'JS 代码混淆',
-                    description: '高级混淆加密，变量名混淆、字符串加密、控制流扁平化、调试保护',
-                    icon: '🛡️',
-                    url: 'JSobfuscator.html'
-                }
-            ];
-
-            const toolsGrid = document.getElementById('toolsGrid');
-            const emptyPlaceholder = document.getElementById('emptyPlaceholder');
-            const themeToggle = document.getElementById('themeToggle');
-
             // ========== 主题管理 ==========
+            const themeToggle = document.getElementById('themeToggle');
             function getTheme() {
                 const saved = localStorage.getItem('swdtool-theme');
                 if (saved) return saved;
-                // 跟随系统偏好
-                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    return 'dark';
-                }
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
                 return 'light';
             }
-
             function applyTheme(theme) {
                 if (theme === 'dark') {
                     document.documentElement.setAttribute('data-theme', 'dark');
@@ -406,60 +336,88 @@
                 }
                 localStorage.setItem('swdtool-theme', theme);
             }
-
-            // 初始化主题
-            const currentTheme = getTheme();
-            applyTheme(currentTheme);
-
-            // 切换主题
+            applyTheme(getTheme());
             themeToggle.addEventListener('click', () => {
                 const newTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
                 applyTheme(newTheme);
             });
-
-            // 监听系统主题变化
             if (window.matchMedia) {
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                    if (!localStorage.getItem('swdtool-theme')) {
-                        applyTheme(e.matches ? 'dark' : 'light');
-                    }
+                    if (!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light');
                 });
             }
 
-            // ========== 渲染工具卡片 ==========
-            function renderTools() {
-                if (toolsData.length === 0) {
+            // ========== 工具数据（含标签） ==========
+            const toolsData = [
+                {
+                    id: 'base64',
+                    name: 'Base64 工具',
+                    description: '在线 Base64 编码与解码，支持 UTF-8 文本',
+                    icon: '🔤',
+                    url: 'TexttoBase64.html',
+                    tags: ['URL编/解码', 'URL16进制编/解码', 'Base64编/解码', 'Base32编/解码', 'Escape编/解码', 'Gzip编/解码']
+                },
+                {
+                    id: 'md5',
+                    name: 'MD5 加密',
+                    description: '将文本转换为 MD5 哈希值，支持32/16位大小写',
+                    icon: '🔐',
+                    url: 'MD5text.html',
+                    tags: ['MD5加密', '文本加密', '在线哈希', '数据校验32/16位MD5', '安全加密']
+                },
+                {
+                    id: 'obfuscator',
+                    name: 'JS 代码混淆',
+                    description: '高级混淆加密，变量名混淆、字符串加密、控制流扁平化、调试保护',
+                    icon: '🛡️',
+                    url: 'JSobfuscator.html',
+                    tags: ['代码混淆', 'JS防盗用', 'JS加密', '域名锁定', '多级混淆', 'JS防复制']
+                }
+            ];
+
+            const toolsGrid = document.getElementById('toolsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const searchInput = document.getElementById('searchInput');
+
+            function renderTools(filterText = '') {
+                const query = filterText.trim().toLowerCase();
+                const filtered = toolsData.filter(tool => {
+                    if (!query) return true;
+                    return tool.name.toLowerCase().includes(query) ||
+                           tool.description.toLowerCase().includes(query) ||
+                           tool.tags.some(tag => tag.toLowerCase().includes(query));
+                });
+
+                if (filtered.length === 0) {
                     toolsGrid.innerHTML = '';
                     toolsGrid.style.display = 'none';
-                    emptyPlaceholder.style.display = 'block';
-                    return;
+                    emptyState.style.display = 'block';
+                } else {
+                    toolsGrid.style.display = 'grid';
+                    emptyState.style.display = 'none';
+                    toolsGrid.innerHTML = filtered.map(tool => {
+                        const tagsHtml = tool.tags.map(t => `<span class="tool-tag">${t}</span>`).join('');
+                        return `
+                            <a href="${tool.url}" class="tool-card">
+                                <div class="tool-icon">${tool.icon}</div>
+                                <h3>${tool.name}</h3>
+                                <p>${tool.description}</p>
+                                <div class="tool-tags">${tagsHtml}</div>
+                            </a>
+                        `;
+                    }).join('');
                 }
-
-                toolsGrid.style.display = 'grid';
-                emptyPlaceholder.style.display = 'none';
-                toolsGrid.innerHTML = toolsData.map(tool => {
-                    return `
-                        <a href="${tool.url}" class="tool-card">
-                            <div class="tool-icon">${tool.icon}</div>
-                            <h3>${tool.name}</h3>
-                            <p>${tool.description}</p>
-                        </a>
-                    `;
-                }).join('');
             }
 
+            // 初始渲染
             renderTools();
 
-            // 点击即将推出标签
-            emptyPlaceholder.addEventListener('click', (e) => {
-                const tag = e.target.closest('.upcoming-tag');
-                if (tag) {
-                    alert(`✨ "${tag.textContent.trim()}" 即将推出，敬请期待！`);
-                }
+            // 实时搜索
+            searchInput.addEventListener('input', (e) => {
+                renderTools(e.target.value);
             });
 
             console.log('🛠️ SwdTool 已就绪，当前工具数量：' + toolsData.length);
-            console.log('🎨 主题模式：' + currentTheme);
         })();
     </script>
 </body>
