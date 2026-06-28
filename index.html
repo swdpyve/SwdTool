@@ -3,429 +3,279 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SwdTool - 开发者工具集</title>
+    <title>多文件ZIP打包 - SwdTool</title>
     <link rel="icon" href="logo.ico" sizes="any">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+    </script>
     <style>
         :root {
             --bg: #f8f9fc;
             --surface: #ffffff;
             --border: #e5e7eb;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
+            --text: #1e293b;
+            --text2: #64748b;
+            --muted: #94a3b8;
             --accent: #4f6ef7;
             --accent-light: #eef1ff;
+            --red: #ef4444;
             --radius: 12px;
             --radius-sm: 8px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-hover: 0 10px 25px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
             --transition: 0.2s ease;
-            --toggle-bg: #e5e7eb;
-            --toggle-dot: #ffffff;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            line-height: 1.5;
-            color: var(--text-primary);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
         }
-
         [data-theme="dark"] {
             --bg: #0f1117;
             --surface: #1a1d27;
             --border: #2a2f3d;
-            --text-primary: #e4e6ed;
-            --text-secondary: #8b8fa7;
-            --text-muted: #5c6078;
+            --text: #e4e6ed;
+            --text2: #8b8fa7;
+            --muted: #5c6078;
             --accent: #6c8cff;
-            --accent-light: rgba(108, 140, 255, 0.12);
-            --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.03) inset;
-            --shadow-hover: 0 10px 25px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.05) inset;
-            --toggle-bg: #3a4060;
-            --toggle-dot: #6c8cff;
+            --accent-light: rgba(108,140,255,0.12);
+            --red: #f87171;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background-color: var(--bg);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .navbar {
-            background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            transition: background 0.3s ease, border-color 0.3s ease;
-        }
-        [data-theme="dark"] .navbar { background: rgba(15,17,23,0.8); }
-        .navbar-inner {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 24px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .navbar-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: var(--text-primary);
-            font-weight: 700;
-            font-size: 1.25rem;
-            letter-spacing: -0.02em;
-            transition: color 0.3s ease;
-        }
-        .navbar-logo .logo-mark {
-            width: 32px;
-            height: 32px;
-            background: var(--accent);
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: background 0.3s ease;
-        }
-        .navbar-links {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            list-style: none;
-        }
-        .navbar-links a {
-            text-decoration: none;
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 0.9rem;
-            padding: 6px 14px;
-            border-radius: 20px;
-            transition: var(--transition);
-        }
-        .navbar-links a:hover { background: var(--accent-light); color: var(--accent); }
-        .navbar-links a.active { background: var(--accent-light); color: var(--accent); }
-
-        .theme-toggle {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            transition: var(--transition);
-            color: var(--text-primary);
-        }
-        .theme-toggle:hover { background: var(--accent-light); border-color: var(--accent); }
-
-        .main-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 48px 24px;
-            flex: 1;
-            width: 100%;
-        }
-
-        .page-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .page-header h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            margin-bottom: 12px;
-            color: var(--text-primary);
-            transition: color 0.3s ease;
-        }
-        .page-header p {
-            font-size: 1.05rem;
-            color: var(--text-secondary);
-            max-width: 500px;
-            margin: 0 auto;
-            transition: color 0.3s ease;
-        }
-
-        /* 搜索栏 */
-        .search-wrapper {
-            max-width: 520px;
-            margin: 0 auto 32px;
-            position: relative;
-        }
-        .search-input {
-            width: 100%;
-            padding: 12px 20px 12px 44px;
-            border-radius: 28px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            outline: none;
-            transition: var(--transition);
-            box-shadow: var(--shadow);
-        }
-        .search-input::placeholder { color: var(--text-muted); }
-        .search-input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
-        }
-        .search-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            pointer-events: none;
-        }
-
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .tool-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            text-decoration: none;
-            color: inherit;
-            box-shadow: var(--shadow);
-            transition: var(--transition), background-color 0.3s ease, border-color 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            cursor: pointer;
-        }
-        .tool-card:hover {
-            box-shadow: var(--shadow-hover);
-            transform: translateY(-2px);
-            border-color: var(--accent);
-        }
-        .tool-card .tool-icon { font-size: 1.8rem; margin-bottom: 2px; }
-        .tool-card h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); transition: color 0.3s ease; }
-        .tool-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
-        .tool-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: auto;
-        }
-        .tool-tag {
-            font-size: 0.7rem;
-            padding: 4px 10px;
-            border-radius: 14px;
-            background: var(--accent-light);
-            color: var(--accent);
-            font-weight: 500;
-            border: 1px solid transparent;
-            white-space: nowrap;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: var(--surface);
-            border-radius: var(--radius);
-            border: 1px dashed var(--border);
-            color: var(--text-secondary);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-        .empty-state .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.7; }
-        .empty-state h2 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
-        .empty-state p { margin-bottom: 16px; font-size: 0.9rem; }
-
-        .footer {
-            border-top: 1px solid var(--border);
-            padding: 20px 24px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            background: var(--surface);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-        .footer a { color: var(--text-secondary); text-decoration: none; transition: color 0.3s ease; }
-        .footer a:hover { color: var(--accent); }
-
-        @media (max-width: 640px) {
-            .main-container { padding: 32px 16px; }
-            .page-header h1 { font-size: 1.8rem; }
-        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;transition:background-color 0.3s}
+        .navbar{backdrop-filter:blur(12px);background:rgba(255,255,255,0.8);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;transition:background 0.3s}
+        [data-theme="dark"] .navbar{background:rgba(15,17,23,0.8)}
+        .navbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:1.2rem}
+        .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+        .nav-links{display:flex;gap:8px;list-style:none;align-items:center}
+        .nav-links a{text-decoration:none;color:var(--text2);font-size:0.9rem;padding:6px 14px;border-radius:20px;transition:var(--transition)}
+        .nav-links a:hover{background:var(--accent-light);color:var(--accent)}
+        .theme-toggle{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text);transition:var(--transition)}
+        .theme-toggle:hover{background:var(--accent-light);border-color:var(--accent)}
+        .container{max-width:960px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
+        .header{text-align:center;margin-bottom:32px}
+        .header h1{font-size:2rem;font-weight:700}
+        .header p{color:var(--text2)}
+        .upload-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:var(--transition);margin-bottom:24px;box-shadow:var(--shadow)}
+        .upload-card:hover,.upload-card.dragover{border-color:var(--accent);background:var(--accent-light)}
+        .upload-icon{font-size:2.8rem;margin-bottom:12px}
+        .upload-card input[type=file]{display:none}
+        .file-list-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
+        .table-wrapper{overflow-x:auto}
+        table{width:100%;border-collapse:collapse;font-size:0.9rem}
+        th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--text2);font-weight:600}
+        td{padding:8px;border-bottom:1px solid var(--border);color:var(--text)}
+        .btn{padding:10px 22px;border-radius:24px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,0.25)}
+        .btn:hover{background:#3d5ce5;box-shadow:0 4px 12px rgba(79,110,247,0.35)}
+        [data-theme="dark"] .btn:hover{background:#5b7ef5}
+        .btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:none}
+        .btn-outline:hover{background:#f1f5f9}
+        [data-theme="dark"] .btn-outline:hover{background:rgba(255,255,255,0.05)}
+        .btn-danger{background:var(--red);color:#fff;padding:4px 12px;font-size:0.8rem;border-radius:16px;border:none;cursor:pointer}
+        .btn-group{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+        .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto;transition:background 0.3s}
+        .footer a{color:var(--text2);text-decoration:none}
+        .empty-message{text-align:center;color:var(--muted);padding:32px 0}
+        @media(max-width:640px){.container{padding:24px 16px}}
     </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="navbar-inner">
-            <a href="index.html" class="navbar-logo">
-                <span class="logo-mark">Sw</span>
-                SwdTool
-            </a>
-            <ul class="navbar-links">
-                <li><a href="index.html" class="active">首页</a></li>
-                <li>
-                    <button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式" aria-label="切换主题">🌙</button>
-                </li>
+            <a href="index.html" class="logo"><span class="logo-mark">Sw</span>SwdTool</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式">🌙</button></li>
             </ul>
         </div>
     </nav>
 
-    <main class="main-container">
-        <div class="page-header">
-            <h1>开发者工具集</h1>
-            <p>轻量、便捷的在线工具，无需安装，即开即用。</p>
+    <main class="container">
+        <div class="header">
+            <h1>📦 多文件ZIP打包工具</h1>
+            <p>批量选择文件 · 自动去重 · 纯前端打包 · 安全离线</p>
         </div>
 
-        <!-- 搜索栏 -->
-        <div class="search-wrapper">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="searchInput" placeholder="搜索工具名称、描述或标签..." autocomplete="off">
+        <!-- 上传区域 -->
+        <div class="upload-card" id="dropZone">
+            <div class="upload-icon">📂</div>
+            <strong style="display:block;margin-bottom:6px;">点击选择文件或拖拽到此处</strong>
+            <span style="color:var(--muted);font-size:0.9rem;">支持任意格式，自动过滤重复文件</span>
+            <input type="file" id="fileInput" multiple>
         </div>
 
-        <div class="tools-grid" id="toolsGrid"></div>
+        <!-- 文件列表 -->
+        <div class="file-list-card">
+            <h3 style="margin-bottom:16px;">已选文件（<span id="fileCount">0</span>）</h3>
+            <div class="table-wrapper">
+                <table id="fileTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>文件名</th>
+                            <th>修改日期</th>
+                            <th>类型</th>
+                            <th>大小</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileTableBody">
+                        <tr><td colspan="6" class="empty-message">暂无文件，请选择上传</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-        <div class="empty-state" id="emptyState" style="display: none;">
-            <div class="icon">🔍</div>
-            <h2>未找到匹配的工具</h2>
-            <p>尝试其他关键词或清空搜索查看全部工具</p>
+        <!-- 操作按钮 -->
+        <div class="btn-group">
+            <button class="btn" id="packBtn" disabled>📦 一键打包下载</button>
+            <button class="btn btn-outline" id="clearBtn">🗑️ 清空数据</button>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="file-list-card" style="margin-top:30px;">
+            <h3 style="margin-bottom:12px;">📖 使用说明</h3>
+            <ul style="color:var(--text2);padding-left:20px;font-size:0.9rem;list-style-type:none;">
+                <li>📂 <strong>选择文件</strong> – 点击上传区域批量选择任意格式文件，系统自动过滤重复文件。</li>
+                <li>🗑️ <strong>删除文件</strong> – 在列表中点击“删除”移除不需要的文件。</li>
+                <li>📦 <strong>一键打包</strong> – 点击按钮将当前所有文件打包为标准ZIP压缩包并自动下载。</li>
+                <li>🔒 <strong>完全本地</strong> – 所有操作均在浏览器中完成，文件不会上传到任何服务器。</li>
+            </ul>
         </div>
     </main>
 
     <footer class="footer">
         <span>© 2026 SwdTool</span>
-        <a href="#">隐私政策</a>
-        <a href="#">MIT License</a>
-        <span>为开发者而生</span>
+        <a href="index.html">返回首页</a>
     </footer>
 
     <script>
         (function() {
-            // ========== 主题管理 ==========
+            // 主题切换
             const themeToggle = document.getElementById('themeToggle');
-            function getTheme() {
-                const saved = localStorage.getItem('swdtool-theme');
-                if (saved) return saved;
-                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
-                return 'light';
-            }
-            function applyTheme(theme) {
-                if (theme === 'dark') {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    themeToggle.textContent = '☀️';
-                } else {
-                    document.documentElement.removeAttribute('data-theme');
-                    themeToggle.textContent = '🌙';
-                }
-                localStorage.setItem('swdtool-theme', theme);
-            }
+            const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const applyTheme = (t) => {
+                document.documentElement.setAttribute('data-theme', t);
+                themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+                localStorage.setItem('swdtool-theme', t);
+            };
             applyTheme(getTheme());
-            themeToggle.addEventListener('click', () => {
-                const newTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
-                applyTheme(newTheme);
-            });
-            if (window.matchMedia) {
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                    if (!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light');
-                });
+            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
+
+            // ZIP打包核心逻辑
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const fileTableBody = document.getElementById('fileTableBody');
+            const fileCountSpan = document.getElementById('fileCount');
+            const packBtn = document.getElementById('packBtn');
+            const clearBtn = document.getElementById('clearBtn');
+
+            let files = [];
+
+            function fileKey(file) {
+                return `${file.name}_${file.size}_${file.lastModified}`;
             }
 
-            // ========== 工具数据（含标签） ==========
-            const toolsData = [
-                {
-                    id: 'base64',
-                    name: 'Base64 工具',
-                    description: '在线 Base64 编码与解码，支持 UTF-8 文本',
-                    icon: '🔤',
-                    url: 'TexttoBase64.html',
-                    tags: ['URL编/解码', 'URL16进制编/解码', 'Base64编/解码', 'Base32编/解码', 'Escape编/解码', 'Gzip编/解码']
-                },
-                {
-                    id: 'md5',
-                    name: 'MD5 加密',
-                    description: '将文本转换为 MD5 哈希值，支持32/16位大小写',
-                    icon: '🔐',
-                    url: 'MD5text.html',
-                    tags: ['MD5加密', '文本加密', '在线哈希', '数据校验32/16位MD5', '安全加密']
-                },
-                {
-                    id: 'obfuscator',
-                    name: 'JS 代码混淆',
-                    description: '高级混淆加密，变量名混淆、字符串加密、控制流扁平化、调试保护',
-                    icon: '🛡️',
-                    url: 'JSobfuscator.html',
-                    tags: ['代码混淆', 'JS防盗用', 'JS加密', '域名锁定', '多级混淆', 'JS防复制']
-                },
-                {
-                    id: 'zip',
-                    name: '多文件ZIP打包',
-                    description: '批量选择文件，纯前端打包为ZIP下载，支持去重',
-                    icon: '📦',
-                    url: 'zip.html',
-                    tags: ['文件压缩', 'ZIP打包', '本地文件打包', '多文件压缩', '文件去重压缩', '离线ZIP打包']
+            function addFiles(newFiles) {
+                let addedCount = 0;
+                const existingKeys = new Set(files.map(f => fileKey(f)));
+                for (const file of newFiles) {
+                    const key = fileKey(file);
+                    if (!existingKeys.has(key)) {
+                        files.push(file);
+                        existingKeys.add(key);
+                        addedCount++;
+                    }
                 }
-            ];
-
-            const toolsGrid = document.getElementById('toolsGrid');
-            const emptyState = document.getElementById('emptyState');
-            const searchInput = document.getElementById('searchInput');
-
-            function renderTools(filterText = '') {
-                const query = filterText.trim().toLowerCase();
-                const filtered = toolsData.filter(tool => {
-                    if (!query) return true;
-                    return tool.name.toLowerCase().includes(query) ||
-                           tool.description.toLowerCase().includes(query) ||
-                           tool.tags.some(tag => tag.toLowerCase().includes(query));
-                });
-
-                if (filtered.length === 0) {
-                    toolsGrid.innerHTML = '';
-                    toolsGrid.style.display = 'none';
-                    emptyState.style.display = 'block';
-                } else {
-                    toolsGrid.style.display = 'grid';
-                    emptyState.style.display = 'none';
-                    toolsGrid.innerHTML = filtered.map(tool => {
-                        const tagsHtml = tool.tags.map(t => `<span class="tool-tag">${t}</span>`).join('');
-                        return `
-                            <a href="${tool.url}" class="tool-card">
-                                <div class="tool-icon">${tool.icon}</div>
-                                <h3>${tool.name}</h3>
-                                <p>${tool.description}</p>
-                                <div class="tool-tags">${tagsHtml}</div>
-                            </a>
-                        `;
-                    }).join('');
+                if (addedCount === 0 && newFiles.length > 0) {
+                    alert('所选文件均已存在列表中，已自动过滤重复项。');
                 }
+                renderFileList();
             }
 
-            // 初始渲染
-            renderTools();
+            window.removeFile = function(index) {
+                files.splice(index, 1);
+                renderFileList();
+            };
 
-            // 实时搜索
-            searchInput.addEventListener('input', (e) => {
-                renderTools(e.target.value);
+            function formatSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            }
+
+            function getFileType(file) {
+                if (file.name.includes('.')) {
+                    return file.name.split('.').pop().toUpperCase() + ' 文件';
+                }
+                return '未知类型';
+            }
+
+            function renderFileList() {
+                fileCountSpan.textContent = files.length;
+                packBtn.disabled = files.length === 0;
+
+                if (files.length === 0) {
+                    fileTableBody.innerHTML = '<tr><td colspan="6" class="empty-message">暂无文件，请选择上传</td></tr>';
+                    return;
+                }
+
+                fileTableBody.innerHTML = files.map((file, index) => {
+                    const lastModified = new Date(file.lastModified).toLocaleString('zh-CN');
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td title="${file.name}">${file.name.length > 30 ? file.name.substring(0,30)+'…' : file.name}</td>
+                            <td>${lastModified}</td>
+                            <td>${getFileType(file)}</td>
+                            <td>${formatSize(file.size)}</td>
+                            <td><button class="btn-danger" onclick="removeFile(${index})">删除</button></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            async function packAndDownload() {
+                if (files.length === 0) return;
+                const zip = new JSZip();
+                for (const file of files) {
+                    zip.file(file.name, file);
+                }
+                const content = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `archive_${new Date().toISOString().slice(0,10)}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    addFiles(Array.from(e.target.files));
+                    fileInput.value = '';
+                }
             });
 
-            console.log('🛠️ SwdTool 已就绪，当前工具数量：' + toolsData.length);
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    addFiles(Array.from(e.dataTransfer.files));
+                }
+            });
+
+            packBtn.addEventListener('click', packAndDownload);
+            clearBtn.addEventListener('click', () => {
+                files = [];
+                renderFileList();
+            });
+
+            renderFileList();
+            console.log('📦 多文件ZIP打包工具已就绪');
         })();
     </script>
 </body>
