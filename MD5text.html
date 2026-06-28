@@ -6,6 +6,7 @@
     <title>MD5 加密 - SwdTool</title>
     <link rel="icon" href="logo.ico" sizes="any">
     <style>
+        /* ========== 亮色主题（默认） ========== */
         :root {
             --bg: #f8f9fc;
             --surface: #ffffff;
@@ -16,14 +17,35 @@
             --accent: #4f6ef7;
             --accent-light: #eef1ff;
             --red: #ef4444;
+            --green: #10b981;
             --radius: 12px;
             --radius-sm: 8px;
             --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
             --shadow-hover: 0 4px 12px rgba(0,0,0,0.06);
             --transition: 0.2s ease;
+            --toggle-bg: #e5e7eb;
+            --toggle-dot: #ffffff;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             line-height: 1.5;
             color: var(--text-primary);
+        }
+
+        /* ========== 暗色主题 ========== */
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2f3d;
+            --text-primary: #e4e6ed;
+            --text-secondary: #8b8fa7;
+            --text-muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-light: rgba(108, 140, 255, 0.12);
+            --red: #f87171;
+            --green: #10b981;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.03) inset;
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.4);
+            --toggle-bg: #3a4060;
+            --toggle-dot: #6c8cff;
         }
 
         * {
@@ -37,6 +59,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .navbar {
@@ -47,6 +70,10 @@
             position: sticky;
             top: 0;
             z-index: 50;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        [data-theme="dark"] .navbar {
+            background: rgba(15,17,23,0.8);
         }
         .navbar-inner {
             max-width: 1100px;
@@ -66,6 +93,7 @@
             font-weight: 700;
             font-size: 1.25rem;
             letter-spacing: -0.02em;
+            transition: color 0.3s ease;
         }
         .navbar-logo .logo-mark {
             width: 32px;
@@ -78,6 +106,7 @@
             color: white;
             font-size: 1rem;
             font-weight: 600;
+            transition: background 0.3s ease;
         }
         .navbar-links {
             display: flex;
@@ -99,6 +128,26 @@
             color: var(--accent);
         }
 
+        /* 主题切换按钮 */
+        .theme-toggle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            color: var(--text-primary);
+        }
+        .theme-toggle:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+        }
+
         .main-container {
             max-width: 800px;
             margin: 0 auto;
@@ -116,10 +165,13 @@
             font-weight: 700;
             letter-spacing: -0.02em;
             margin-bottom: 8px;
+            color: var(--text-primary);
+            transition: color 0.3s ease;
         }
         .tool-header p {
             color: var(--text-secondary);
             font-size: 0.95rem;
+            transition: color 0.3s ease;
         }
 
         .card {
@@ -129,6 +181,7 @@
             padding: 24px;
             box-shadow: var(--shadow);
             margin-bottom: 20px;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
         .card label {
             display: block;
@@ -148,7 +201,7 @@
             resize: vertical;
             background: var(--bg);
             color: var(--text-primary);
-            transition: var(--transition);
+            transition: var(--transition), background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
             min-height: 120px;
         }
         .card textarea:focus {
@@ -169,6 +222,10 @@
             color: var(--text-primary);
             border: 1px solid var(--border);
             font-size: 0.9rem;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        [data-theme="dark"] .card .hash-result {
+            background: #1e2130;
         }
 
         .format-selector {
@@ -199,6 +256,10 @@
             background: #f1f5f9;
             border-color: #cbd5e1;
         }
+        [data-theme="dark"] .format-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.05);
+            border-color: #4a5070;
+        }
 
         .button-group {
             display: flex;
@@ -227,6 +288,9 @@
             background: #3d5ce5;
             box-shadow: 0 4px 12px rgba(79, 110, 247, 0.35);
         }
+        [data-theme="dark"] .btn:hover {
+            background: #5b7ef5;
+        }
         .btn:active {
             transform: scale(0.97);
         }
@@ -241,8 +305,12 @@
             border-color: #cbd5e1;
             box-shadow: var(--shadow-hover);
         }
+        [data-theme="dark"] .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: #4a5070;
+        }
         .btn-copy {
-            background: #10b981;
+            background: var(--green);
             box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
         }
         .btn-copy:hover {
@@ -280,10 +348,12 @@
             font-size: 0.8rem;
             background: var(--surface);
             margin-top: auto;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
         .footer a {
             color: var(--text-secondary);
             text-decoration: none;
+            transition: color 0.3s ease;
         }
         .footer a:hover {
             color: var(--accent);
@@ -308,7 +378,11 @@
             </a>
             <ul class="navbar-links">
                 <li><a href="index.html">首页</a></li>
-                <li><a href="https://github.com" target="_blank" rel="noopener">GitHub ↗</a></li>
+                <li>
+                    <button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式" aria-label="切换主题">
+                        🌙
+                    </button>
+                </li>
             </ul>
         </div>
     </nav>
@@ -486,6 +560,46 @@
 
     <script>
         (function() {
+            // ========== 主题管理 ==========
+            const themeToggle = document.getElementById('themeToggle');
+
+            function getTheme() {
+                const saved = localStorage.getItem('swdtool-theme');
+                if (saved) return saved;
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    return 'dark';
+                }
+                return 'light';
+            }
+
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    themeToggle.textContent = '☀️';
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    themeToggle.textContent = '🌙';
+                }
+                localStorage.setItem('swdtool-theme', theme);
+            }
+
+            const currentTheme = getTheme();
+            applyTheme(currentTheme);
+
+            themeToggle.addEventListener('click', () => {
+                const newTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
+                applyTheme(newTheme);
+            });
+
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                    if (!localStorage.getItem('swdtool-theme')) {
+                        applyTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
+            }
+
+            // ========== MD5 交互逻辑 ==========
             const inputText = document.getElementById('inputText');
             const hashOutput = document.getElementById('hashOutput');
             const hashBtn = document.getElementById('hashBtn');
@@ -540,11 +654,9 @@
                 }
             }
 
-            // 格式切换
             formatSelector.addEventListener('click', (e) => {
                 const btn = e.target.closest('.format-btn');
                 if (!btn) return;
-                // 更新激活状态
                 formatSelector.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentFormat = btn.dataset.format;
