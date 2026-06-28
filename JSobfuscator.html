@@ -6,6 +6,7 @@
     <title>JS 代码混淆加密 - SwdTool</title>
     <link rel="icon" href="logo.ico" sizes="any">
     <style>
+        /* ========== 亮色主题（默认） ========== */
         :root {
             --bg: #f8f9fc;
             --surface: #ffffff;
@@ -21,49 +22,271 @@
             --radius-sm: 8px;
             --shadow: 0 1px 3px rgba(0,0,0,0.06);
             --transition: 0.2s ease;
+            --toggle-bg: #e5e7eb;
+            --toggle-dot: #ffffff;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
         }
+
+        /* ========== 暗色主题 ========== */
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2f3d;
+            --text: #e4e6ed;
+            --text2: #8b8fa7;
+            --muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-light: rgba(108, 140, 255, 0.12);
+            --green: #10b981;
+            --red: #f87171;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.03) inset;
+            --toggle-bg: #3a4060;
+            --toggle-dot: #6c8cff;
+        }
+
         *{margin:0;padding:0;box-sizing:border-box}
-        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
-        .navbar{backdrop-filter:blur(12px);background:rgba(255,255,255,0.8);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
-        .navbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
-        .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:1.2rem}
-        .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
-        .nav-links{display:flex;gap:8px;list-style:none}
-        .nav-links a{text-decoration:none;color:var(--text2);font-size:0.9rem;padding:6px 14px;border-radius:20px;transition:var(--transition)}
-        .nav-links a:hover{background:var(--accent-light);color:var(--accent)}
+        body{
+            background:var(--bg);
+            color:var(--text);
+            display:flex;
+            flex-direction:column;
+            min-height:100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* 导航栏 */
+        .navbar{
+            backdrop-filter:blur(12px);
+            background:rgba(255,255,255,0.8);
+            border-bottom:1px solid var(--border);
+            position:sticky;
+            top:0;
+            z-index:50;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        [data-theme="dark"] .navbar {
+            background: rgba(15,17,23,0.8);
+        }
+        .navbar-inner{
+            max-width:1200px;
+            margin:0 auto;
+            padding:0 24px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+        }
+        .logo{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            text-decoration:none;
+            color:var(--text);
+            font-weight:700;
+            font-size:1.2rem;
+            transition: color 0.3s ease;
+        }
+        .logo-mark{
+            width:32px;
+            height:32px;
+            background:var(--accent);
+            border-radius:8px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#fff;
+            font-weight:600;
+            transition: background 0.3s ease;
+        }
+        .nav-links{
+            display:flex;
+            gap:8px;
+            list-style:none;
+            align-items: center;
+        }
+        .nav-links a{
+            text-decoration:none;
+            color:var(--text2);
+            font-size:0.9rem;
+            padding:6px 14px;
+            border-radius:20px;
+            transition:var(--transition);
+        }
+        .nav-links a:hover{
+            background:var(--accent-light);
+            color:var(--accent);
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            color: var(--text);
+        }
+        .theme-toggle:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+        }
+
         .container{max-width:1200px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
         .header{text-align:center;margin-bottom:32px}
-        .header h1{font-size:2rem;font-weight:700}
-        .header p{color:var(--text2)}
+        .header h1{font-size:2rem;font-weight:700;color:var(--text);transition: color 0.3s ease;}
+        .header p{color:var(--text2);transition: color 0.3s ease;}
         .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
-        .tab-btn{padding:8px 16px;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text2);font-size:0.85rem;cursor:pointer;transition:var(--transition);font-weight:500}
-        .tab-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+        .tab-btn{
+            padding:8px 16px;
+            border:1px solid var(--border);
+            border-radius:20px;
+            background:var(--surface);
+            color:var(--text2);
+            font-size:0.85rem;
+            cursor:pointer;
+            transition:var(--transition);
+            font-weight:500;
+        }
+        .tab-btn.active{
+            background:var(--accent-light);
+            border-color:var(--accent);
+            color:var(--accent);
+        }
         .tab-panel{display:none}
         .tab-panel.active{display:block}
-        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
-        textarea{width:100%;padding:14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Fira Code',monospace;font-size:0.9rem;line-height:1.5;resize:vertical;min-height:200px;background:var(--bg);color:var(--text)}
-        textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,110,247,0.12);background:var(--surface)}
-        textarea[readonly]{background:#f1f5f9}
-        .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:var(--transition);min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center}
-        .upload-area:hover,.upload-area.dragover{border-color:var(--accent);background:var(--accent-light)}
+        .card{
+            background:var(--surface);
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            padding:20px;
+            box-shadow:var(--shadow);
+            margin-bottom:20px;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        textarea{
+            width:100%;
+            padding:14px;
+            border:1px solid var(--border);
+            border-radius:var(--radius-sm);
+            font-family:'Fira Code',monospace;
+            font-size:0.9rem;
+            line-height:1.5;
+            resize:vertical;
+            min-height:200px;
+            background:var(--bg);
+            color:var(--text);
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        textarea:focus{
+            outline:none;
+            border-color:var(--accent);
+            box-shadow:0 0 0 3px rgba(79,110,247,0.12);
+            background:var(--surface);
+        }
+        textarea[readonly]{
+            background:#f1f5f9;
+        }
+        [data-theme="dark"] textarea[readonly] {
+            background: #1e2130;
+        }
+
+        .upload-area{
+            border:2px dashed var(--border);
+            border-radius:var(--radius);
+            padding:40px;
+            text-align:center;
+            cursor:pointer;
+            transition:var(--transition);
+            min-height:180px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            color: var(--text);
+        }
+        .upload-area:hover,.upload-area.dragover{
+            border-color:var(--accent);
+            background:var(--accent-light);
+        }
         .upload-area input[type=file]{display:none}
+
         .btn-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-        .btn{padding:10px 22px;border-radius:24px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,0.25);white-space:nowrap}
-        .btn:hover{background:#3d5ce5;box-shadow:0 4px 12px rgba(79,110,247,0.35)}
+        .btn{
+            padding:10px 22px;
+            border-radius:24px;
+            font-weight:600;
+            font-size:0.9rem;
+            border:none;
+            cursor:pointer;
+            transition:var(--transition);
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            background:var(--accent);
+            color:#fff;
+            box-shadow:0 2px 8px rgba(79,110,247,0.25);
+            white-space:nowrap;
+        }
+        .btn:hover{
+            background:#3d5ce5;
+            box-shadow:0 4px 12px rgba(79,110,247,0.35);
+        }
+        [data-theme="dark"] .btn:hover {
+            background: #5b7ef5;
+        }
         .btn:active{transform:scale(0.97)}
-        .btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:none}
-        .btn-outline:hover{background:#f1f5f9}
-        .btn-green{background:var(--green);box-shadow:0 2px 8px rgba(16,185,129,0.25)}
+        .btn-outline{
+            background:var(--surface);
+            border:1px solid var(--border);
+            color:var(--text);
+            box-shadow:none;
+        }
+        .btn-outline:hover{
+            background:#f1f5f9;
+        }
+        [data-theme="dark"] .btn-outline:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .btn-green{
+            background:var(--green);
+            box-shadow:0 2px 8px rgba(16,185,129,0.25);
+        }
         .btn-green:hover{background:#059669}
         .btn-green.copied{background:#065f46;pointer-events:none}
+
         .options{margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:center}
-        .options label{font-weight:500;font-size:0.9rem;display:flex;align-items:center;gap:6px}
-        .options input[type=checkbox]{width:16px;height:16px}
-        .options input[type=text]{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;width:200px}
-        .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto}
-        .footer a{color:var(--text2);text-decoration:none}
-        .footer a:hover{color:var(--accent)}
+        .options label{font-weight:500;font-size:0.9rem;display:flex;align-items:center;gap:6px;color:var(--text);}
+        .options input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);}
+        .options input[type=text]{
+            padding:6px 10px;
+            border:1px solid var(--border);
+            border-radius:6px;
+            font-size:0.85rem;
+            width:200px;
+            background:var(--surface);
+            color:var(--text);
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        .footer{
+            border-top:1px solid var(--border);
+            padding:20px;
+            text-align:center;
+            color:var(--muted);
+            font-size:0.8rem;
+            background:var(--surface);
+            margin-top:auto;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        .footer a{color:var(--text2);text-decoration:none;transition: color 0.3s ease;}
+        .footer a:hover{color:var(--accent);}
+
         @media(max-width:640px){.container{padding:24px 16px}}
     </style>
 </head>
@@ -73,7 +296,11 @@
             <a href="index.html" class="logo"><span class="logo-mark">Sw</span>SwdTool</a>
             <ul class="nav-links">
                 <li><a href="index.html">首页</a></li>
-                <li><a href="https://github.com" target="_blank">GitHub ↗</a></li>
+                <li>
+                    <button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式" aria-label="切换主题">
+                        🌙
+                    </button>
+                </li>
             </ul>
         </div>
     </nav>
@@ -108,7 +335,7 @@
         </div>
 
         <div class="card">
-            <h3 style="margin-bottom:12px">⚙️ 混淆选项</h3>
+            <h3 style="margin-bottom:12px;color:var(--text);">⚙️ 混淆选项</h3>
             <div class="options">
                 <label><input type="checkbox" id="optDomain" checked> 域名锁定</label>
                 <input type="text" id="domainInput" placeholder="your-domain.com" value="example.com">
@@ -124,7 +351,7 @@
         </div>
 
         <div class="card">
-            <label>🔐 混淆结果（单行压缩）</label>
+            <label style="color:var(--text);">🔐 混淆结果（单行压缩）</label>
             <textarea id="outputArea" readonly placeholder="混淆后的代码将显示在此处..." style="min-height:200px"></textarea>
             <div class="btn-group">
                 <button class="btn btn-green" id="copyBtn">📋 复制结果</button>
@@ -141,7 +368,48 @@
 
     <script>
         (function() {
-            // DOM元素
+            // ========== 主题管理 ==========
+            const themeToggle = document.getElementById('themeToggle');
+
+            function getTheme() {
+                const saved = localStorage.getItem('swdtool-theme');
+                if (saved) return saved;
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    return 'dark';
+                }
+                return 'light';
+            }
+
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    themeToggle.textContent = '☀️';
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    themeToggle.textContent = '🌙';
+                }
+                localStorage.setItem('swdtool-theme', theme);
+            }
+
+            // 初始化
+            const currentTheme = getTheme();
+            applyTheme(currentTheme);
+
+            themeToggle.addEventListener('click', () => {
+                const newTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
+                applyTheme(newTheme);
+            });
+
+            // 跟随系统变化（如果用户未手动设置）
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                    if (!localStorage.getItem('swdtool-theme')) {
+                        applyTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
+            }
+
+            // ========== 原始功能代码 ==========
             const codeInput = document.getElementById('codeInput');
             const outputArea = document.getElementById('outputArea');
             const fileInput = document.getElementById('fileInput');
@@ -162,7 +430,6 @@
 
             let currentCode = '';
 
-            // 示例代码
             const exampleCode = `// 示例：计算购物车总价
 function calculateTotal(items, discount) {
     let total = 0;
@@ -218,58 +485,46 @@ console.log("总价: " + calculateTotal(cart, 0.1));`;
             function obfuscateAdvanced(source, options) {
                 if(!source.trim()) return '';
                 
-                // 1. 去除注释和多余空白（简单压缩）
                 let code = source.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '').replace(/^\s*\n/gm, '');
                 
-                // 2. 字符串加密：提取字符串字面量，用XOR+Base64双层加密
                 const stringMap = new Map();
                 let strIdx = 0;
                 code = code.replace(/'[^']*'|"[^"]*"|`[^`]*`/g, match => {
                     const key = `_S${strIdx++}_`;
                     let inner = match.slice(1, -1);
-                    // 处理转义
                     inner = inner.replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\\\/g, '\\');
                     stringMap.set(key, inner);
                     return key;
                 });
 
-                // 生成字符串解密函数和加密数组
                 const stringPairs = Array.from(stringMap.entries());
                 const encodedStrings = stringPairs.map(([_, val]) => {
-                    // XOR 简单加密: 每个字符与密钥异或
                     const key = Math.floor(Math.random()*255)+1;
                     let enc = btoa(unescape(encodeURIComponent(val)));
-                    // 再对base64字符串进行XOR
                     const xorEnc = enc.split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ key)).join('');
                     return { xor: btoa(xorEnc), key: key };
                 });
-                // 生成密钥数组和解码函数
                 const decodeFuncName = '_d' + randomId(4);
                 const decodeFunc = `function ${decodeFuncName}(i,k){var s=atob(i).split('').map(function(c){return String.fromCharCode(c.charCodeAt(0)^k);}).join('');return decodeURIComponent(escape(atob(s)));}`;
                 
-                // 替换占位符为解码调用
                 stringPairs.forEach(([key, _], index) => {
                     const enc = encodedStrings[index];
                     code = code.replace(new RegExp(key, 'g'), `${decodeFuncName}('${enc.xor}',${enc.key})`);
                 });
 
-                // 3. 变量名混淆：收集局部变量并替换
                 const varMap = new Map();
                 let varCount = 0;
-                // 匹配 var/let/const 声明
                 code = code.replace(/\b(var|let|const)\s+([a-zA-Z_$][\w$]*)/g, (_, kw, name) => {
                     if (!varMap.has(name)) {
                         varMap.set(name, '_' + (varCount++).toString(36));
                     }
                     return kw + ' ' + varMap.get(name);
                 });
-                // 替换变量引用
                 varMap.forEach((newName, oldName) => {
                     const regex = new RegExp('\\b' + oldName + '\\b', 'g');
                     code = code.replace(regex, newName);
                 });
 
-                // 4. 控制流扁平化 (可选)
                 if (options.flatten && code.includes('\n')) {
                     const lines = code.split('\n').filter(l => l.trim());
                     if (lines.length > 2) {
@@ -278,7 +533,6 @@ console.log("总价: " + calculateTotal(cart, 0.1));`;
                     }
                 }
 
-                // 5. 死代码注入 (可选)
                 let deadCodeStr = '';
                 if (options.deadCode) {
                     deadCodeStr = [
@@ -288,7 +542,6 @@ console.log("总价: " + calculateTotal(cart, 0.1));`;
                     ].join('');
                 }
 
-                // 6. 调试保护 (可选)
                 let debugStr = '';
                 if (options.debugProtect) {
                     debugStr = `
@@ -297,7 +550,6 @@ console.log("总价: " + calculateTotal(cart, 0.1));`;
                     `;
                 }
 
-                // 7. 域名锁定 (可选)
                 let domainLock = '';
                 if (options.domainLock && options.domain) {
                     domainLock = `
@@ -305,14 +557,11 @@ console.log("总价: " + calculateTotal(cart, 0.1));`;
                     `;
                 }
 
-                // 组合最终代码
                 let result = `${decodeFunc};${deadCodeStr}${debugStr}${domainLock}${code}`;
-                // 压缩为单行，移除多余空格
                 result = result.replace(/\s+/g, ' ').trim();
                 return result;
             }
 
-            // 执行混淆
             function performObfuscation() {
                 const source = codeInput.value.trim() || currentCode;
                 if (!source) { alert('请先输入或上传代码'); return; }
@@ -333,7 +582,6 @@ console.log("总价: " + calculateTotal(cart, 0.1));`;
                 }
             }
 
-            // 事件绑定
             obfuscateBtn.addEventListener('click', performObfuscation);
             exampleBtn.addEventListener('click', () => {
                 codeInput.value = exampleCode;
@@ -373,7 +621,6 @@ console.log("总价: " + calculateTotal(cart, 0.1));`;
                 URL.revokeObjectURL(a.href);
             });
 
-            // Ctrl+Enter 快捷混淆
             document.addEventListener('keydown', e => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     e.preventDefault();
