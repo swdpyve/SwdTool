@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多文件ZIP打包 - SwdTool</title>
+    <link rel="icon" href="logo.ico" sizes="any">
+    <!-- JSZip 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+    </script>
+    <style>
+        :root {
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1e293b;
+            --text2: #64748b;
+            --muted: #94a3b8;
+            --accent: #4f6ef7;
+            --accent-light: #eef1ff;
+            --red: #ef4444;
+            --green: #10b981;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --transition: 0.2s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+        }
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2f3d;
+            --text: #e4e6ed;
+            --text2: #8b8fa7;
+            --muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-light: rgba(108,140,255,0.12);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;transition:background-color 0.3s}
+        .navbar{backdrop-filter:blur(12px);background:rgba(255,255,255,0.8);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;transition:background 0.3s}
+        [data-theme="dark"] .navbar{background:rgba(15,17,23,0.8)}
+        .navbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:1.2rem}
+        .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+        .nav-links{display:flex;gap:8px;list-style:none;align-items:center}
+        .nav-links a{text-decoration:none;color:var(--text2);font-size:0.9rem;padding:6px 14px;border-radius:20px;transition:var(--transition)}
+        .nav-links a:hover{background:var(--accent-light);color:var(--accent)}
+        .theme-toggle{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text);transition:var(--transition)}
+        .theme-toggle:hover{background:var(--accent-light);border-color:var(--accent)}
+        .container{max-width:960px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
+        .header{text-align:center;margin-bottom:32px}
+        .header h1{font-size:2rem;font-weight:700}
+        .header p{color:var(--text2)}
+        .upload-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:var(--transition);margin-bottom:24px;box-shadow:var(--shadow)}
+        .upload-card:hover,.upload-card.dragover{border-color:var(--accent);background:var(--accent-light)}
+        .upload-icon{font-size:2.8rem;margin-bottom:12px}
+        .upload-card input[type=file]{display:none}
+        .file-list-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
+        .table-wrapper{overflow-x:auto}
+        table{width:100%;border-collapse:collapse;font-size:0.9rem}
+        th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--text2);font-weight:600}
+        td{padding:8px;border-bottom:1px solid var(--border);color:var(--text)}
+        .btn{padding:10px 22px;border-radius:24px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,0.25)}
+        .btn:hover{background:#3d5ce5;box-shadow:0 4px 12px rgba(79,110,247,0.35)}
+        [data-theme="dark"] .btn:hover{background:#5b7ef5}
+        .btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:none}
+        .btn-outline:hover{background:#f1f5f9}
+        [data-theme="dark"] .btn-outline:hover{background:rgba(255,255,255,0.05)}
+        .btn-danger{background:var(--red);color:#fff;padding:4px 12px;font-size:0.8rem;border-radius:16px;border:none;cursor:pointer}
+        .btn-group{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+        .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto;transition:background 0.3s}
+        .footer a{color:var(--text2);text-decoration:none}
+        .empty-message{text-align:center;color:var(--muted);padding:32px 0}
+        @media(max-width:640px){.container{padding:24px 16px}}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="logo"><span class="logo-mark">Sw</span>SwdTool</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式">🌙</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="header">
+            <h1>📦 多文件ZIP打包工具</h1>
+            <p>批量选择文件 · 自动去重 · 纯前端打包 · 安全离线</p>
+        </div>
+
+        <!-- 上传区域 -->
+        <div class="upload-card" id="dropZone">
+            <div class="upload-icon">📂</div>
+            <strong style="display:block;margin-bottom:6px;">点击选择文件或拖拽到此处</strong>
+            <span style="color:var(--muted);font-size:0.9rem;">支持任意格式，自动过滤重复文件</span>
+            <input type="file" id="fileInput" multiple>
+        </div>
+
+        <!-- 文件列表 -->
+        <div class="file-list-card">
+            <h3 style="margin-bottom:16px;">已选文件（<span id="fileCount">0</span>）</h3>
+            <div class="table-wrapper">
+                <table id="fileTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>文件名</th>
+                            <th>修改日期</th>
+                            <th>类型</th>
+                            <th>大小</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileTableBody">
+                        <tr><td colspan="6" class="empty-message">暂无文件，请选择上传</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="btn-group">
+            <button class="btn" id="packBtn" disabled>📦 一键打包下载</button>
+            <button class="btn btn-outline" id="clearBtn">🗑️ 清空数据</button>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="file-list-card" style="margin-top:30px;">
+            <h3 style="margin-bottom:12px;">📖 使用说明</h3>
+            <ul style="color:var(--text2);padding-left:20px;font-size:0.9rem;list-style-type:none;">
+                <li>📂 <strong>选择文件</strong> – 点击上传区域批量选择任意格式文件，系统自动过滤重复文件。</li>
+                <li>🗑️ <strong>删除文件</strong> – 在列表中点击“删除”移除不需要的文件。</li>
+                <li>📦 <strong>一键打包</strong> – 点击按钮将当前所有文件打包为标准ZIP压缩包并自动下载。</li>
+                <li>🔒 <strong>完全本地</strong> – 所有操作均在浏览器中完成，文件不会上传到任何服务器。</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span>© 2026 SwdTool</span>
+        <a href="index.html">返回首页</a>
+    </footer>
+
+    <script>
+        (function() {
+            // ========== 主题 ==========
+            const themeToggle = document.getElementById('themeToggle');
+            const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const applyTheme = (t) => {
+                document.documentElement.setAttribute('data-theme', t);
+                themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+                localStorage.setItem('swdtool-theme', t);
+            };
+            applyTheme(getTheme());
+            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
+
+            // ========== ZIP 工具逻辑 ==========
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const fileTableBody = document.getElementById('fileTableBody');
+            const fileCountSpan = document.getElementById('fileCount');
+            const packBtn = document.getElementById('packBtn');
+            const clearBtn = document.getElementById('clearBtn');
+
+            // 存储唯一文件（去重）
+            let files = [];
+
+            // 生成唯一标识 (name + size + lastModified)
+            function fileKey(file) {
+                return `${file.name}_${file.size}_${file.lastModified}`;
+            }
+
+            // 添加文件数组
+            function addFiles(newFiles) {
+                let addedCount = 0;
+                const existingKeys = new Set(files.map(f => fileKey(f)));
+                for (const file of newFiles) {
+                    const key = fileKey(file);
+                    if (!existingKeys.has(key)) {
+                        files.push(file);
+                        existingKeys.add(key);
+                        addedCount++;
+                    }
+                }
+                if (addedCount === 0 && newFiles.length > 0) {
+                    alert('所选文件均已存在列表中，已自动过滤重复项。');
+                }
+                renderFileList();
+            }
+
+            // 删除文件
+            window.removeFile = function(index) {
+                files.splice(index, 1);
+                renderFileList();
+            };
+
+            // 格式化文件大小
+            function formatSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            }
+
+            // 获取文件类型描述
+            function getFileType(file) {
+                if (file.name.includes('.')) {
+                    return file.name.split('.').pop().toUpperCase() + ' 文件';
+                }
+                return '未知类型';
+            }
+
+            // 渲染文件列表
+            function renderFileList() {
+                fileCountSpan.textContent = files.length;
+                packBtn.disabled = files.length === 0;
+
+                if (files.length === 0) {
+                    fileTableBody.innerHTML = '<tr><td colspan="6" class="empty-message">暂无文件，请选择上传</td></tr>';
+                    return;
+                }
+
+                fileTableBody.innerHTML = files.map((file, index) => {
+                    const lastModified = new Date(file.lastModified).toLocaleString('zh-CN');
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td title="${file.name}">${file.name.length > 30 ? file.name.substring(0,30)+'…' : file.name}</td>
+                            <td>${lastModified}</td>
+                            <td>${getFileType(file)}</td>
+                            <td>${formatSize(file.size)}</td>
+                            <td><button class="btn-danger" onclick="removeFile(${index})">删除</button></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // 打包下载
+            async function packAndDownload() {
+                if (files.length === 0) return;
+                const zip = new JSZip();
+                for (const file of files) {
+                    zip.file(file.name, file);
+                }
+                const content = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `archive_${new Date().toISOString().slice(0,10)}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            // 事件绑定
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    addFiles(Array.from(e.target.files));
+                    fileInput.value = ''; // 允许重复选择同一文件
+                }
+            });
+
+            // 拖拽上传
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    addFiles(Array.from(e.dataTransfer.files));
+                }
+            });
+
+            packBtn.addEventListener('click', packAndDownload);
+            clearBtn.addEventListener('click', () => {
+                files = [];
+                renderFileList();
+            });
+
+            // 初始渲染
+            renderFileList();
+            console.log('📦 多文件ZIP打包工具已就绪');
+        })();
+    </script>
+</body>
+</html>
