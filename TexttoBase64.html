@@ -6,6 +6,7 @@
     <title>Base64 工具 - SwdTool</title>
     <link rel="icon" href="logo.ico" sizes="any">
     <style>
+        /* ========== 亮色主题（默认） ========== */
         :root {
             --bg: #f8f9fc;
             --surface: #ffffff;
@@ -17,14 +18,36 @@
             --accent-light: #eef1ff;
             --red: #ef4444;
             --red-light: #fef2f2;
+            --green: #10b981;
             --radius: 12px;
             --radius-sm: 8px;
             --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
             --shadow-hover: 0 4px 12px rgba(0,0,0,0.06);
             --transition: 0.2s ease;
+            --toggle-bg: #e5e7eb;
+            --toggle-dot: #ffffff;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             line-height: 1.5;
             color: var(--text-primary);
+        }
+
+        /* ========== 暗色主题 ========== */
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2f3d;
+            --text-primary: #e4e6ed;
+            --text-secondary: #8b8fa7;
+            --text-muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-light: rgba(108, 140, 255, 0.12);
+            --red: #f87171;
+            --red-light: #3b1f1f;
+            --green: #10b981;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.03) inset;
+            --shadow-hover: 0 4px 12px rgba(0,0,0,0.4);
+            --toggle-bg: #3a4060;
+            --toggle-dot: #6c8cff;
         }
 
         * {
@@ -38,6 +61,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* 导航栏 */
@@ -49,6 +73,10 @@
             position: sticky;
             top: 0;
             z-index: 50;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        [data-theme="dark"] .navbar {
+            background: rgba(15,17,23,0.8);
         }
         .navbar-inner {
             max-width: 1100px;
@@ -68,6 +96,7 @@
             font-weight: 700;
             font-size: 1.25rem;
             letter-spacing: -0.02em;
+            transition: color 0.3s ease;
         }
         .navbar-logo .logo-mark {
             width: 32px;
@@ -80,6 +109,7 @@
             color: white;
             font-size: 1rem;
             font-weight: 600;
+            transition: background 0.3s ease;
         }
         .navbar-links {
             display: flex;
@@ -101,6 +131,26 @@
             color: var(--accent);
         }
 
+        /* 主题切换按钮 */
+        .theme-toggle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            color: var(--text-primary);
+        }
+        .theme-toggle:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+        }
+
         /* 主容器 */
         .main-container {
             max-width: 800px;
@@ -119,11 +169,14 @@
             font-weight: 700;
             letter-spacing: -0.02em;
             margin-bottom: 8px;
+            color: var(--text-primary);
+            transition: color 0.3s ease;
         }
         .tool-header p {
             color: var(--text-secondary);
             font-size: 0.95rem;
             min-height: 1.5em;
+            transition: color 0.3s ease;
         }
 
         /* 模式切换 */
@@ -168,6 +221,7 @@
             padding: 24px;
             box-shadow: var(--shadow);
             margin-bottom: 20px;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
         .card label {
             display: block;
@@ -187,7 +241,7 @@
             resize: vertical;
             background: var(--bg);
             color: var(--text-primary);
-            transition: var(--transition);
+            transition: var(--transition), background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
             min-height: 120px;
         }
         .card textarea:focus {
@@ -200,6 +254,9 @@
             background: #f1f5f9;
             color: var(--text-primary);
             cursor: default;
+        }
+        [data-theme="dark"] .card textarea[readonly] {
+            background: #1e2130;
         }
 
         .button-group {
@@ -229,6 +286,9 @@
             background: #3d5ce5;
             box-shadow: 0 4px 12px rgba(79, 110, 247, 0.35);
         }
+        [data-theme="dark"] .btn:hover {
+            background: #5b7ef5;
+        }
         .btn:active {
             transform: scale(0.97);
         }
@@ -243,8 +303,12 @@
             border-color: #cbd5e1;
             box-shadow: var(--shadow-hover);
         }
+        [data-theme="dark"] .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: #4a5070;
+        }
         .btn-copy {
-            background: #10b981;
+            background: var(--green);
             box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
         }
         .btn-copy:hover {
@@ -273,10 +337,12 @@
             font-size: 0.8rem;
             background: var(--surface);
             margin-top: auto;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
         .footer a {
             color: var(--text-secondary);
             text-decoration: none;
+            transition: color 0.3s ease;
         }
         .footer a:hover {
             color: var(--accent);
@@ -302,7 +368,11 @@
             </a>
             <ul class="navbar-links">
                 <li><a href="index.html">首页</a></li>
-                <li><a href="https://github.com" target="_blank" rel="noopener">GitHub ↗</a></li>
+                <li>
+                    <button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式" aria-label="切换主题">
+                        🌙
+                    </button>
+                </li>
             </ul>
         </div>
     </nav>
@@ -361,10 +431,48 @@
 
     <script>
         (function() {
-            // ---------- 状态 ----------
-            let currentMode = 'encode'; // 'encode' 或 'decode'
+            // ========== 主题管理 ==========
+            const themeToggle = document.getElementById('themeToggle');
 
-            // ---------- DOM 元素 ----------
+            function getTheme() {
+                const saved = localStorage.getItem('swdtool-theme');
+                if (saved) return saved;
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    return 'dark';
+                }
+                return 'light';
+            }
+
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    themeToggle.textContent = '☀️';
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    themeToggle.textContent = '🌙';
+                }
+                localStorage.setItem('swdtool-theme', theme);
+            }
+
+            const currentTheme = getTheme();
+            applyTheme(currentTheme);
+
+            themeToggle.addEventListener('click', () => {
+                const newTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
+                applyTheme(newTheme);
+            });
+
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                    if (!localStorage.getItem('swdtool-theme')) {
+                        applyTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
+            }
+
+            // ========== Base64 工具逻辑 ==========
+            let currentMode = 'encode';
+
             const inputText = document.getElementById('inputText');
             const outputText = document.getElementById('outputText');
             const actionBtn = document.getElementById('actionBtn');
@@ -377,10 +485,6 @@
             const outputLabel = document.getElementById('outputLabel');
             const modeDescription = document.getElementById('modeDescription');
 
-            // ---------- 工具函数 ----------
-            /**
-             * 文本 -> Base64 (支持 UTF-8)
-             */
             function utf8ToBase64(str) {
                 const encoder = new TextEncoder();
                 const bytes = encoder.encode(str);
@@ -391,13 +495,8 @@
                 return btoa(binaryString);
             }
 
-            /**
-             * Base64 -> 文本 (支持 UTF-8)
-             */
             function base64ToUtf8(base64Str) {
-                // 解码 Base64 为二进制字符串
                 const binaryString = atob(base64Str);
-                // 转为 Uint8Array
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {
                     bytes[i] = binaryString.charCodeAt(i);
@@ -406,9 +505,6 @@
                 return decoder.decode(bytes);
             }
 
-            /**
-             * 更新界面元素以匹配当前模式
-             */
             function updateUIForMode() {
                 if (currentMode === 'encode') {
                     inputLabel.textContent = '输入文本';
@@ -429,14 +525,10 @@
                     decodeModeBtn.classList.add('active');
                     encodeModeBtn.classList.remove('active');
                 }
-                // 切换模式时清空错误信息和结果，但保留输入内容（方便对比）
                 errorMessage.classList.remove('show');
                 outputText.value = '';
             }
 
-            /**
-             * 执行编码或解码操作
-             */
             function performAction() {
                 const raw = inputText.value.trim();
                 errorMessage.classList.remove('show');
@@ -450,41 +542,37 @@
 
                 try {
                     if (currentMode === 'encode') {
-                        const base64 = utf8ToBase64(raw);
-                        outputText.value = base64;
+                        outputText.value = utf8ToBase64(raw);
                     } else {
-                        const decoded = base64ToUtf8(raw);
-                        outputText.value = decoded;
+                        outputText.value = base64ToUtf8(raw);
                     }
                     outputText.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 } catch (err) {
                     if (currentMode === 'encode') {
                         errorMessage.textContent = '❌ 编码失败：' + err.message;
                     } else {
-                        errorMessage.textContent = '❌ 解码失败：请检查输入是否为有效的 Base64 字符串（可能包含不支持的字符）';
+                        errorMessage.textContent = '❌ 解码失败：请检查输入是否为有效的 Base64 字符串';
                     }
                     errorMessage.classList.add('show');
                     outputText.value = '';
                 }
             }
 
-            // ---------- 事件绑定 ----------
-            // 模式切换
             encodeModeBtn.addEventListener('click', () => {
-                if (currentMode === 'encode') return;
-                currentMode = 'encode';
-                updateUIForMode();
+                if (currentMode !== 'encode') {
+                    currentMode = 'encode';
+                    updateUIForMode();
+                }
             });
             decodeModeBtn.addEventListener('click', () => {
-                if (currentMode === 'decode') return;
-                currentMode = 'decode';
-                updateUIForMode();
+                if (currentMode !== 'decode') {
+                    currentMode = 'decode';
+                    updateUIForMode();
+                }
             });
 
-            // 操作按钮（编码/解码）
             actionBtn.addEventListener('click', performAction);
 
-            // 清空
             clearBtn.addEventListener('click', () => {
                 inputText.value = '';
                 outputText.value = '';
@@ -492,7 +580,6 @@
                 inputText.focus();
             });
 
-            // 复制结果
             copyBtn.addEventListener('click', async () => {
                 const result = outputText.value;
                 if (!result) {
@@ -508,14 +595,13 @@
                         copyBtn.innerHTML = originalHTML;
                         copyBtn.classList.remove('copied');
                     }, 2000);
-                } catch (err) {
+                } catch {
                     outputText.select();
                     document.execCommand('copy');
                     alert('已复制到剪贴板！');
                 }
             });
 
-            // Ctrl+Enter 快捷键
             inputText.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     e.preventDefault();
@@ -523,7 +609,6 @@
                 }
             });
 
-            // 初始 UI 状态
             updateUIForMode();
             console.log('🔤 Base64 工具（编码/解码）已就绪');
         })();
