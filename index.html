@@ -158,7 +158,6 @@
             transition: color 0.3s ease;
         }
 
-        /* 搜索栏 */
         .search-wrapper {
             max-width: 520px;
             margin: 0 auto 32px;
@@ -294,7 +293,6 @@
             <p>轻量、便捷的在线工具，无需安装，即开即用。</p>
         </div>
 
-        <!-- 搜索栏 -->
         <div class="search-wrapper">
             <span class="search-icon">🔍</span>
             <input type="text" class="search-input" id="searchInput" placeholder="搜索工具名称、描述或标签..." autocomplete="off">
@@ -380,6 +378,14 @@
                     icon: '📦',
                     url: 'FileToZIP.html',
                     tags: ['文件压缩', 'ZIP打包', '本地文件打包', '多文件压缩', '文件去重压缩', '离线ZIP打包']
+                },
+                {
+                    id: 'unzip',
+                    name: 'ZIP在线解压',
+                    description: '上传ZIP文件，在线预览内容并单独下载所需文件',
+                    icon: '📂',
+                    url: 'ZIPToFile.html',
+                    tags: ['在线ZIP解压', '免安装解压', '单文件下载', '本地解压', '免费解压工具', 'ZIP文件提取']
                 }
             ];
 
@@ -417,10 +423,8 @@
                 }
             }
 
-            // 初始渲染
             renderTools();
 
-            // 实时搜索
             searchInput.addEventListener('input', (e) => {
                 renderTools(e.target.value);
             });
