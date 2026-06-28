@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>多文件ZIP打包 - SwdTool</title>
     <link rel="icon" href="logo.ico" sizes="any">
-    <!-- JSZip 库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
     </script>
     <style>
@@ -19,7 +18,6 @@
             --accent: #4f6ef7;
             --accent-light: #eef1ff;
             --red: #ef4444;
-            --green: #10b981;
             --radius: 12px;
             --radius-sm: 8px;
             --shadow: 0 1px 3px rgba(0,0,0,0.06);
@@ -35,6 +33,7 @@
             --muted: #5c6078;
             --accent: #6c8cff;
             --accent-light: rgba(108,140,255,0.12);
+            --red: #f87171;
         }
         *{margin:0;padding:0;box-sizing:border-box}
         body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;transition:background-color 0.3s}
@@ -147,7 +146,7 @@
 
     <script>
         (function() {
-            // ========== 主题 ==========
+            // 主题切换
             const themeToggle = document.getElementById('themeToggle');
             const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             const applyTheme = (t) => {
@@ -159,7 +158,7 @@
             themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
 
-            // ========== ZIP 工具逻辑 ==========
+            // ZIP打包核心逻辑
             const fileInput = document.getElementById('fileInput');
             const dropZone = document.getElementById('dropZone');
             const fileTableBody = document.getElementById('fileTableBody');
@@ -167,15 +166,12 @@
             const packBtn = document.getElementById('packBtn');
             const clearBtn = document.getElementById('clearBtn');
 
-            // 存储唯一文件（去重）
             let files = [];
 
-            // 生成唯一标识 (name + size + lastModified)
             function fileKey(file) {
                 return `${file.name}_${file.size}_${file.lastModified}`;
             }
 
-            // 添加文件数组
             function addFiles(newFiles) {
                 let addedCount = 0;
                 const existingKeys = new Set(files.map(f => fileKey(f)));
@@ -193,13 +189,11 @@
                 renderFileList();
             }
 
-            // 删除文件
             window.removeFile = function(index) {
                 files.splice(index, 1);
                 renderFileList();
             };
 
-            // 格式化文件大小
             function formatSize(bytes) {
                 if (bytes === 0) return '0 B';
                 const k = 1024;
@@ -208,7 +202,6 @@
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
             }
 
-            // 获取文件类型描述
             function getFileType(file) {
                 if (file.name.includes('.')) {
                     return file.name.split('.').pop().toUpperCase() + ' 文件';
@@ -216,7 +209,6 @@
                 return '未知类型';
             }
 
-            // 渲染文件列表
             function renderFileList() {
                 fileCountSpan.textContent = files.length;
                 packBtn.disabled = files.length === 0;
@@ -241,7 +233,6 @@
                 }).join('');
             }
 
-            // 打包下载
             async function packAndDownload() {
                 if (files.length === 0) return;
                 const zip = new JSZip();
@@ -259,16 +250,14 @@
                 URL.revokeObjectURL(url);
             }
 
-            // 事件绑定
             dropZone.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', (e) => {
                 if (e.target.files.length) {
                     addFiles(Array.from(e.target.files));
-                    fileInput.value = ''; // 允许重复选择同一文件
+                    fileInput.value = '';
                 }
             });
 
-            // 拖拽上传
             dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
             dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
             dropZone.addEventListener('drop', (e) => {
@@ -285,7 +274,6 @@
                 renderFileList();
             });
 
-            // 初始渲染
             renderFileList();
             console.log('📦 多文件ZIP打包工具已就绪');
         })();
