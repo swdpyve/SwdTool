@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A4纸自动排版 - SwdTool</title>
+    <link rel="icon" href="logo.ico" sizes="any">
+    <style>
+        :root {
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1e293b;
+            --text2: #64748b;
+            --muted: #94a3b8;
+            --accent: #4f6ef7;
+            --accent-light: #eef1ff;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --transition: 0.2s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+        }
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2f3d;
+            --text: #e4e6ed;
+            --text2: #8b8fa7;
+            --muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-light: rgba(108,140,255,0.12);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;transition:background-color 0.3s}
+        .navbar{backdrop-filter:blur(12px);background:rgba(255,255,255,0.8);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;transition:background 0.3s}
+        [data-theme="dark"] .navbar{background:rgba(15,17,23,0.8)}
+        .navbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:1.2rem}
+        .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+        .nav-links{display:flex;gap:8px;list-style:none;align-items:center}
+        .nav-links a{text-decoration:none;color:var(--text2);font-size:0.9rem;padding:6px 14px;border-radius:20px;transition:var(--transition)}
+        .nav-links a:hover{background:var(--accent-light);color:var(--accent)}
+        .theme-toggle{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text);transition:var(--transition)}
+        .theme-toggle:hover{background:var(--accent-light);border-color:var(--accent)}
+        .container{max-width:1100px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
+        .header{text-align:center;margin-bottom:32px}
+        .header h1{font-size:2rem;font-weight:700}
+        .header p{color:var(--text2)}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+        .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:30px;text-align:center;cursor:pointer;transition:var(--transition);margin-bottom:20px}
+        .upload-area:hover,.upload-area.dragover{border-color:var(--accent);background:var(--accent-light)}
+        .upload-area input[type=file]{display:none}
+        .btn{padding:10px 22px;border-radius:24px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,0.25)}
+        .btn:hover{background:#3d5ce5;box-shadow:0 4px 12px rgba(79,110,247,0.35)}
+        [data-theme="dark"] .btn:hover{background:#5b7ef5}
+        .btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:none}
+        .btn-outline:hover{background:#f1f5f9}
+        [data-theme="dark"] .btn-outline:hover{background:rgba(255,255,255,0.05)}
+        .row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end}
+        .form-group{display:flex;flex-direction:column;gap:6px}
+        .form-group label{font-weight:500;font-size:0.85rem;color:var(--text)}
+        .form-group select,.form-group input{padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.9rem}
+        /* 边距网格 - 采用二维布局暗示方向 */
+        .margin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 8px;
+            width: 240px;
+            align-items: center;
+            justify-items: center;
+        }
+        .margin-grid .margin-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .margin-grid .margin-input label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text2);
+            text-transform: uppercase;
+        }
+        .margin-grid .margin-input input {
+            width: 70px;
+            text-align: center;
+            padding: 6px 8px;
+        }
+        /* 指定每个输入框在网格中的位置 */
+        .margin-top    { grid-column: 2; grid-row: 1; }
+        .margin-left   { grid-column: 1; grid-row: 2; }
+        .margin-right  { grid-column: 3; grid-row: 2; }
+        .margin-bottom { grid-column: 2; grid-row: 3; }
+
+        .canvas-wrapper{text-align:center;overflow-x:auto}
+        canvas{max-width:100%;height:auto;border:1px solid var(--border);border-radius:var(--radius);background:white}
+        .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto;transition:background 0.3s}
+        .footer a{color:var(--text2);text-decoration:none}
+        @media(max-width:640px){.container{padding:24px 16px}}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="logo"><span class="logo-mark">Sw</span>SwdTool</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式">🌙</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="header">
+            <h1>🖼️ A4纸自动排版</h1>
+            <p>上传照片，选择证件照尺寸，设置边距，自动排版到A4纸</p>
+        </div>
+
+        <div class="card">
+            <div class="upload-area" id="dropZone">
+                <div style="font-size:2.5rem;margin-bottom:8px;">📷</div>
+                <strong>点击或拖拽上传照片</strong>
+                <div style="color:var(--muted);font-size:0.9rem;">支持 JPG、PNG、WebP</div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>照片尺寸</label>
+                    <select id="sizeSelect">
+                        <option value="25x35">一寸 (25×35mm)</option>
+                        <option value="22x32">小一寸 (22×32mm)</option>
+                        <option value="33x48">大一寸 (33×48mm)</option>
+                        <option value="35x49">二寸 (35×49mm)</option>
+                        <option value="35x45">小二寸 (35×45mm)</option>
+                        <option value="35x53">大二寸 (35×53mm)</option>
+                        <option value="55x84">三寸 (55×84mm)</option>
+                        <option value="26x32">身份证 (26×32mm)</option>
+                        <option value="22x32">驾驶证 (22×32mm)</option>
+                        <option value="33x48">港澳通行证 (33×48mm)</option>
+                        <option value="33x48">护照 (33×48mm)</option>
+                        <option value="45x45">日本签证 (45×45mm)</option>
+                        <option value="51x51">赴美签证 (51×51mm)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:10px;">
+                <label>边距设置（毫米）</label>
+                <div class="margin-grid">
+                    <!-- 上方 -->
+                    <div class="margin-input margin-top">
+                        <label>上</label>
+                        <input type="number" id="marginTop" value="5" min="0" max="50" step="1">
+                    </div>
+                    <!-- 左 -->
+                    <div class="margin-input margin-left">
+                        <label>左</label>
+                        <input type="number" id="marginLeft" value="5" min="0" max="50" step="1">
+                    </div>
+                    <!-- 右 -->
+                    <div class="margin-input margin-right">
+                        <label>右</label>
+                        <input type="number" id="marginRight" value="5" min="0" max="50" step="1">
+                    </div>
+                    <!-- 下 -->
+                    <div class="margin-input margin-bottom">
+                        <label>下</label>
+                        <input type="number" id="marginBottom" value="5" min="0" max="50" step="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <button class="btn" id="generateBtn">✨ 生成排版</button>
+                <button class="btn btn-outline" id="downloadBtn" disabled>⬇️ 下载A4图片</button>
+                <button class="btn btn-outline" id="clearBtn">🗑️ 清空</button>
+            </div>
+        </div>
+
+        <div class="card" id="previewCard" style="display:none;">
+            <h3 style="margin-bottom:12px;">排版预览（A4纸）</h3>
+            <div class="canvas-wrapper">
+                <canvas id="outputCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:30px;">
+            <h3 style="margin-bottom:12px;">📖 使用说明</h3>
+            <ul style="color:var(--text2);padding-left:20px;font-size:0.9rem;list-style-type:none;">
+                <li>📷 上传一张照片，选择目标证件照尺寸。</li>
+                <li>📐 在“边距设置”区域分别设定上、左、下、右边距（单位毫米）。</li>
+                <li>🖨️ 点击“生成排版”自动计算排列，预览A4纸效果。</li>
+                <li>⬇️ 点击“下载A4图片”保存高清排版图，适合打印。</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span>© 2026 SwdTool</span>
+        <a href="index.html">返回首页</a>
+    </footer>
+
+    <script>
+        (function() {
+            // 主题切换
+            const themeToggle = document.getElementById('themeToggle');
+            const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const applyTheme = (t) => {
+                document.documentElement.setAttribute('data-theme', t);
+                themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+                localStorage.setItem('swdtool-theme', t);
+            };
+            applyTheme(getTheme());
+            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
+
+            // DOM 元素
+            const fileInput = document.getElementById('fileInput');
+            const dropZone = document.getElementById('dropZone');
+            const sizeSelect = document.getElementById('sizeSelect');
+            const marginTop = document.getElementById('marginTop');
+            const marginLeft = document.getElementById('marginLeft');
+            const marginBottom = document.getElementById('marginBottom');
+            const marginRight = document.getElementById('marginRight');
+            const generateBtn = document.getElementById('generateBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const previewCard = document.getElementById('previewCard');
+            const canvas = document.getElementById('outputCanvas');
+
+            let uploadedImage = null;
+
+            // 上传处理
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', e => {
+                if(e.target.files.length) loadImage(e.target.files[0]);
+            });
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if(e.dataTransfer.files.length) loadImage(e.dataTransfer.files[0]);
+            });
+
+            function loadImage(file) {
+                if(!file.type.startsWith('image/')) {
+                    alert('请选择图片文件');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        uploadedImage = img;
+                        generateBtn.click(); // 自动生成预览
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // 生成排版
+            generateBtn.addEventListener('click', () => {
+                if(!uploadedImage) {
+                    alert('请先上传照片');
+                    return;
+                }
+
+                const [pw, ph] = sizeSelect.value.split('x').map(Number);
+                const mt = parseFloat(marginTop.value) || 0;
+                const ml = parseFloat(marginLeft.value) || 0;
+                const mb = parseFloat(marginBottom.value) || 0;
+                const mr = parseFloat(marginRight.value) || 0;
+
+                const a4w = 210, a4h = 297;
+                const availW = a4w - ml - mr;
+                const availH = a4h - mt - mb;
+
+                const cols = Math.floor(availW / pw);
+                const rows = Math.floor(availH / ph);
+                if(cols <=0 || rows <=0) {
+                    alert('边距或照片尺寸过大，无法排列任何照片');
+                    return;
+                }
+
+                const scale = 10;
+                const canvasW = a4w * scale;
+                const canvasH = a4h * scale;
+                canvas.width = canvasW;
+                canvas.height = canvasH;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvasW, canvasH);
+
+                const targetW = pw * scale;
+                const targetH = ph * scale;
+                const img = uploadedImage;
+                const imgRatio = img.width / img.height;
+                const targetRatio = pw / ph;
+
+                let sx, sy, sw, sh;
+                if (imgRatio > targetRatio) {
+                    sh = img.height;
+                    sw = img.height * targetRatio;
+                    sx = (img.width - sw) / 2;
+                    sy = 0;
+                } else {
+                    sw = img.width;
+                    sh = img.width / targetRatio;
+                    sx = 0;
+                    sy = (img.height - sh) / 2;
+                }
+
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        const dx = (ml + col * pw) * scale;
+                        const dy = (mt + row * ph) * scale;
+                        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, targetW, targetH);
+                    }
+                }
+
+                // 辅助线
+                ctx.strokeStyle = '#cccccc';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(ml * scale, mt * scale, availW * scale, availH * scale);
+                ctx.setLineDash([]);
+
+                previewCard.style.display = 'block';
+                downloadBtn.disabled = false;
+                canvas.scrollIntoView({ behavior: 'smooth' });
+            });
+
+            downloadBtn.addEventListener('click', () => {
+                if(!canvas.width) return;
+                const link = document.createElement('a');
+                link.download = 'A4_photo_layout.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            clearBtn.addEventListener('click', () => {
+                uploadedImage = null;
+                fileInput.value = '';
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                previewCard.style.display = 'none';
+                downloadBtn.disabled = true;
+            });
+
+            console.log('🖼️ A4纸自动排版工具已就绪');
+        })();
+    </script>
+</body>
+</html>
