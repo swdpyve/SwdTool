@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF阅读器 - SwdTool</title>
+    <link rel="icon" href="logo.ico" sizes="any">
+    <!-- 优先本地库，若失败则回退 CDN -->
+    <script>
+        (function() {
+            const localPdfPath = 'js/PDF.js';
+            const localWorkerPath = 'js/PDF.worker.js';
+            const cdnPdfPath = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+            const cdnWorkerPath = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+            function loadScript(src, onLoad, onError) {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = onLoad;
+                script.onerror = onError;
+                document.head.appendChild(script);
+            }
+
+            function initPdfJs() {
+                if (typeof pdfjsLib === 'undefined') {
+                    alert('PDF.js 库加载失败，请检查本地文件或网络连接。');
+                    return;
+                }
+                // 优先尝试本地 worker
+                pdfjsLib.GlobalWorkerOptions.workerSrc = localWorkerPath;
+                console.log('PDF.js 已就绪，使用 worker: ' + pdfjsLib.GlobalWorkerOptions.workerSrc);
+            }
+
+            // 先尝试加载本地 PDF.js
+            loadScript(localPdfPath, function() {
+                initPdfJs();
+            }, function() {
+                // 本地加载失败，回退到 CDN
+                console.warn('本地 PDF.js 未找到，正在从 CDN 加载...');
+                loadScript(cdnPdfPath, function() {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = cdnWorkerPath;
+                    console.log('已从 CDN 加载 PDF.js');
+                }, function() {
+                    alert('PDF.js 加载失败，请检查网络或手动放置库文件到 js/PDF.js');
+                });
+            });
+        })();
+    </script>
+    <style>
+        :root {
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1e293b;
+            --text2: #64748b;
+            --muted: #94a3b8;
+            --accent: #4f6ef7;
+            --accent-light: #eef1ff;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --transition: 0.2s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+        }
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2f3d;
+            --text: #e4e6ed;
+            --text2: #8b8fa7;
+            --muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-light: rgba(108,140,255,0.12);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;transition:background-color 0.3s}
+        .navbar{backdrop-filter:blur(12px);background:rgba(255,255,255,0.8);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;transition:background 0.3s}
+        [data-theme="dark"] .navbar{background:rgba(15,17,23,0.8)}
+        .navbar-inner{max-width:1300px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:1.2rem}
+        .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+        .nav-links{display:flex;gap:8px;list-style:none;align-items:center}
+        .nav-links a{text-decoration:none;color:var(--text2);font-size:0.9rem;padding:6px 14px;border-radius:20px;transition:var(--transition)}
+        .nav-links a:hover{background:var(--accent-light);color:var(--accent)}
+        .theme-toggle{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text);transition:var(--transition)}
+        .theme-toggle:hover{background:var(--accent-light);border-color:var(--accent)}
+        .container{max-width:1300px;margin:0 auto;padding:20px 24px;flex:1;width:100%;display:flex;flex-direction:column}
+        .header{text-align:center;margin-bottom:24px}
+        .header h1{font-size:2rem;font-weight:700}
+        .header p{color:var(--text2)}
+        .toolbar{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;transition:background-color 0.3s, border-color 0.3s}
+        .toolbar button{padding:8px 16px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.9rem;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;font-weight:500}
+        .toolbar button:hover:not(:disabled){background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+        .toolbar button:disabled{opacity:0.5;cursor:default}
+        .toolbar .page-info{font-weight:600;color:var(--text);min-width:80px;text-align:center}
+        .toolbar .scale-info{font-weight:600;color:var(--accent);min-width:60px;text-align:center}
+        .file-input{display:none}
+        .btn-accent{background:var(--accent);color:#fff;border:none}
+        .btn-accent:hover:not(:disabled){background:#3d5ce5;color:#fff}
+        .pdf-container{flex:1;overflow:auto;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);display:flex;justify-content:center;align-items:flex-start;padding:20px;transition:background-color 0.3s, border-color 0.3s}
+        .pdf-container.dragover{border-color:var(--accent);background:var(--accent-light)}
+        canvas{box-shadow:0 4px 20px rgba(0,0,0,0.1);border-radius:4px;max-width:100%;height:auto;}
+        .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto;transition:background 0.3s}
+        .footer a{color:var(--text2);text-decoration:none}
+        .bottom-toolbar{margin-top:16px}
+        @media(max-width:640px){.container{padding:16px}.toolbar{gap:8px;padding:10px}}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="logo"><span class="logo-mark">Sw</span>SwdTool</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式">🌙</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="header">
+            <h1>📄 PDF在线预览工具</h1>
+            <p>拖拽上传 · 翻页阅读 · 缩放预览 · 键盘快捷键 · 高清渲染</p>
+        </div>
+
+        <!-- 顶部工具栏 -->
+        <div class="toolbar" id="topToolbar">
+            <button class="btn-accent" id="selectFileBtn">📁 选择PDF</button>
+            <input type="file" class="file-input" id="fileInput" accept=".pdf">
+            <button id="prevBtnTop" disabled>◀ 上一页</button>
+            <span class="page-info" id="pageInfoTop">0 / 0</span>
+            <button id="nextBtnTop" disabled>下一页 ▶</button>
+            <button id="zoomOutBtnTop" disabled>🔍−</button>
+            <span class="scale-info" id="scaleInfoTop">100%</span>
+            <button id="zoomInBtnTop" disabled>🔍+</button>
+        </div>
+
+        <!-- PDF 显示区域，支持拖拽 -->
+        <div class="pdf-container" id="pdfContainer">
+            <canvas id="pdfCanvas"></canvas>
+        </div>
+
+        <!-- 底部工具栏 -->
+        <div class="toolbar bottom-toolbar" id="bottomToolbar" style="display:none;">
+            <button class="btn-accent" id="selectFileBtnBottom">📁 选择PDF</button>
+            <button id="prevBtnBottom" disabled>◀ 上一页</button>
+            <span class="page-info" id="pageInfoBottom">0 / 0</span>
+            <button id="nextBtnBottom" disabled>下一页 ▶</button>
+            <button id="zoomOutBtnBottom" disabled>🔍−</button>
+            <span class="scale-info" id="scaleInfoBottom">100%</span>
+            <button id="zoomInBtnBottom" disabled>🔍+</button>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span>© 2026 SwdTool</span>
+        <a href="index.html">返回首页</a>
+    </footer>
+
+    <script>
+        (function() {
+            // 主题切换
+            const themeToggle = document.getElementById('themeToggle');
+            const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const applyTheme = (t) => {
+                document.documentElement.setAttribute('data-theme', t);
+                themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+                localStorage.setItem('swdtool-theme', t);
+            };
+            applyTheme(getTheme());
+            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
+
+            // 等待 PDF.js 加载完成
+            const waitForPdfJs = (callback) => {
+                if (typeof pdfjsLib !== 'undefined') {
+                    callback();
+                } else {
+                    const checkInterval = setInterval(() => {
+                        if (typeof pdfjsLib !== 'undefined') {
+                            clearInterval(checkInterval);
+                            callback();
+                        }
+                    }, 100);
+                }
+            };
+
+            // DOM 元素
+            const fileInput = document.getElementById('fileInput');
+            const selectFileBtn = document.getElementById('selectFileBtn');
+            const selectFileBtnBottom = document.getElementById('selectFileBtnBottom');
+            const pdfCanvas = document.getElementById('pdfCanvas');
+            const ctx = pdfCanvas.getContext('2d');
+            const pdfContainer = document.getElementById('pdfContainer');
+            const bottomToolbar = document.getElementById('bottomToolbar');
+
+            const prevBtnTop = document.getElementById('prevBtnTop');
+            const nextBtnTop = document.getElementById('nextBtnTop');
+            const pageInfoTop = document.getElementById('pageInfoTop');
+            const zoomOutBtnTop = document.getElementById('zoomOutBtnTop');
+            const zoomInBtnTop = document.getElementById('zoomInBtnTop');
+            const scaleInfoTop = document.getElementById('scaleInfoTop');
+
+            const prevBtnBottom = document.getElementById('prevBtnBottom');
+            const nextBtnBottom = document.getElementById('nextBtnBottom');
+            const pageInfoBottom = document.getElementById('pageInfoBottom');
+            const zoomOutBtnBottom = document.getElementById('zoomOutBtnBottom');
+            const zoomInBtnBottom = document.getElementById('zoomInBtnBottom');
+            const scaleInfoBottom = document.getElementById('scaleInfoBottom');
+
+            let pdfDoc = null;
+            let currentPage = 1;
+            let totalPages = 0;
+            let currentScale = 100;
+
+            function updateUI() {
+                const hasDoc = pdfDoc !== null;
+                const pageText = hasDoc ? `${currentPage} / ${totalPages}` : '0 / 0';
+                const scaleText = `${currentScale}%`;
+
+                pageInfoTop.textContent = pageText;
+                scaleInfoTop.textContent = scaleText;
+                prevBtnTop.disabled = !hasDoc || currentPage <= 1;
+                nextBtnTop.disabled = !hasDoc || currentPage >= totalPages;
+                zoomOutBtnTop.disabled = !hasDoc || currentScale <= 100;
+                zoomInBtnTop.disabled = !hasDoc || currentScale >= 200;
+
+                pageInfoBottom.textContent = pageText;
+                scaleInfoBottom.textContent = scaleText;
+                prevBtnBottom.disabled = !hasDoc || currentPage <= 1;
+                nextBtnBottom.disabled = !hasDoc || currentPage >= totalPages;
+                zoomOutBtnBottom.disabled = !hasDoc || currentScale <= 100;
+                zoomInBtnBottom.disabled = !hasDoc || currentScale >= 200;
+
+                bottomToolbar.style.display = hasDoc ? 'flex' : 'none';
+            }
+
+            async function renderPage() {
+                if (!pdfDoc) return;
+                const page = await pdfDoc.getPage(currentPage);
+                const viewport = page.getViewport({ scale: currentScale / 100 });
+                pdfCanvas.width = viewport.width;
+                pdfCanvas.height = viewport.height;
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                updateUI();
+            }
+
+            async function loadPDF(file) {
+                if (!file || file.type !== 'application/pdf') {
+                    alert('请选择有效的PDF文件');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const typedarray = new Uint8Array(e.target.result);
+                    try {
+                        pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
+                        totalPages = pdfDoc.numPages;
+                        currentPage = 1;
+                        currentScale = 100;
+                        await renderPage();
+                    } catch (err) {
+                        alert('PDF解析失败：' + err.message);
+                        console.error(err);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            function goToPage(delta) {
+                if (!pdfDoc) return;
+                const newPage = currentPage + delta;
+                if (newPage < 1 || newPage > totalPages) return;
+                currentPage = newPage;
+                renderPage();
+                pdfContainer.scrollTop = 0;
+            }
+
+            function changeScale(delta) {
+                if (!pdfDoc) return;
+                let newScale = currentScale + delta * 10;
+                if (newScale < 100) newScale = 100;
+                if (newScale > 200) newScale = 200;
+                if (newScale === currentScale) return;
+                currentScale = newScale;
+                renderPage();
+            }
+
+            function triggerFileInput() {
+                fileInput.click();
+            }
+
+            // 拖拽上传支持
+            pdfContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                pdfContainer.classList.add('dragover');
+            });
+            pdfContainer.addEventListener('dragleave', () => {
+                pdfContainer.classList.remove('dragover');
+            });
+            pdfContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                pdfContainer.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    loadPDF(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    loadPDF(e.target.files[0]);
+                }
+            });
+
+            selectFileBtn.addEventListener('click', triggerFileInput);
+            selectFileBtnBottom.addEventListener('click', triggerFileInput);
+
+            prevBtnTop.addEventListener('click', () => goToPage(-1));
+            nextBtnTop.addEventListener('click', () => goToPage(1));
+            prevBtnBottom.addEventListener('click', () => goToPage(-1));
+            nextBtnBottom.addEventListener('click', () => goToPage(1));
+
+            zoomOutBtnTop.addEventListener('click', () => changeScale(-1));
+            zoomInBtnTop.addEventListener('click', () => changeScale(1));
+            zoomOutBtnBottom.addEventListener('click', () => changeScale(-1));
+            zoomInBtnBottom.addEventListener('click', () => changeScale(1));
+
+            document.addEventListener('keydown', (e) => {
+                if (!pdfDoc) return;
+                const key = e.key;
+                if (key === 'ArrowLeft' || key === 'PageUp') {
+                    e.preventDefault();
+                    goToPage(-1);
+                } else if (key === 'ArrowRight' || key === 'PageDown') {
+                    e.preventDefault();
+                    goToPage(1);
+                } else if (key === 'Home') {
+                    e.preventDefault();
+                    if (currentPage !== 1) { currentPage = 1; renderPage(); }
+                } else if (key === 'End') {
+                    e.preventDefault();
+                    if (currentPage !== totalPages) { currentPage = totalPages; renderPage(); }
+                } else if (key === '+' || key === '=') {
+                    e.preventDefault();
+                    changeScale(1);
+                } else if (key === '-') {
+                    e.preventDefault();
+                    changeScale(-1);
+                }
+            });
+
+            pdfContainer.addEventListener('wheel', (e) => {
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    if (e.deltaY < 0) changeScale(1);
+                    else changeScale(-1);
+                }
+            }, { passive: false });
+
+            waitForPdfJs(() => {
+                updateUI();
+                console.log('PDF阅读器已启动，可使用拖拽或按钮上传文件。');
+            });
+        })();
+    </script>
+</body>
+</html>
