@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片像素画 - SwdTool</title>
+    <link rel="icon" href="logo.ico" sizes="any">
+    <style>
+        :root {
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1e293b;
+            --text2: #64748b;
+            --muted: #94a3b8;
+            --accent: #4f6ef7;
+            --accent-light: #eef1ff;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --transition: 0.2s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+        }
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2f3d;
+            --text: #e4e6ed;
+            --text2: #8b8fa7;
+            --muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-light: rgba(108,140,255,0.12);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;transition:background-color 0.3s}
+        .navbar{backdrop-filter:blur(12px);background:rgba(255,255,255,0.8);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;transition:background 0.3s}
+        [data-theme="dark"] .navbar{background:rgba(15,17,23,0.8)}
+        .navbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:1.2rem}
+        .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+        .nav-links{display:flex;gap:8px;list-style:none;align-items:center}
+        .nav-links a{text-decoration:none;color:var(--text2);font-size:0.9rem;padding:6px 14px;border-radius:20px;transition:var(--transition)}
+        .nav-links a:hover{background:var(--accent-light);color:var(--accent)}
+        .theme-toggle{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text);transition:var(--transition)}
+        .theme-toggle:hover{background:var(--accent-light);border-color:var(--accent)}
+        .container{max-width:1100px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
+        .header{text-align:center;margin-bottom:32px}
+        .header h1{font-size:2rem;font-weight:700}
+        .header p{color:var(--text2)}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+        .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:30px;text-align:center;cursor:pointer;transition:var(--transition);margin-bottom:20px}
+        .upload-area:hover,.upload-area.dragover{border-color:var(--accent);background:var(--accent-light)}
+        .upload-area input[type=file]{display:none}
+        .row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+        .col{flex:1;min-width:250px}
+        .preview-box{text-align:center;padding:16px;background:var(--bg);border-radius:var(--radius);min-height:220px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+        .preview-box img,.preview-box canvas{max-width:100%;max-height:350px;height:auto;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff;box-shadow:var(--shadow);object-fit:contain}
+        .form-group{margin-bottom:16px}
+        .form-group label{display:block;font-weight:500;font-size:0.9rem;margin-bottom:6px;color:var(--text)}
+        .form-group input[type=range]{width:100%;margin-top:4px}
+        .inline-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+        .inline-row span{font-weight:600;color:var(--accent);min-width:40px}
+        .inline-row input[type=number]{width:90px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.9rem;text-align:center}
+        .inline-row input[type=number]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,110,247,0.12)}
+        .info-tag{display:inline-block;padding:4px 10px;border-radius:14px;background:var(--accent-light);color:var(--accent);font-size:0.8rem;font-weight:500}
+        .btn-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+        .btn{padding:10px 22px;border-radius:24px;font-weight:600;font-size:0.9rem;border:none;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,0.25)}
+        .btn:hover{background:#3d5ce5;box-shadow:0 4px 12px rgba(79,110,247,0.35)}
+        [data-theme="dark"] .btn:hover{background:#5b7ef5}
+        .btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:none}
+        .btn-outline:hover{background:#f1f5f9}
+        [data-theme="dark"] .btn-outline:hover{background:rgba(255,255,255,0.05)}
+        .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto;transition:background 0.3s}
+        .footer a{color:var(--text2);text-decoration:none}
+        @media(max-width:640px){.container{padding:24px 16px}.row{flex-direction:column}}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="logo"><span class="logo-mark">Sw</span>SwdTool</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式">🌙</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="header">
+            <h1>🎨 图片像素画工具</h1>
+            <p>上传图片 · 调节像素块大小 · 指定目标分辨率 · 高清下载</p>
+        </div>
+
+        <div class="card">
+            <!-- 上传区域 -->
+            <div class="upload-area" id="dropZone">
+                <div style="font-size:2.5rem;margin-bottom:8px;">🖼️</div>
+                <strong>点击或拖拽上传图片</strong>
+                <div style="color:var(--muted);font-size:0.9rem;">支持 PNG、JPG、JPEG、GIF、WebP、BMP</div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <!-- 编辑区域（上传后显示） -->
+            <div id="editorSection" style="display:none;">
+                <div class="row">
+                    <div class="col">
+                        <h4 style="margin-bottom:8px;text-align:center;">原始图片</h4>
+                        <div class="preview-box">
+                            <img id="originalImg" alt="原图预览">
+                        </div>
+                        <div style="text-align:center;margin-top:6px;font-size:0.85rem;color:var(--text2);">
+                            原图尺寸：<span id="origSize">0×0</span>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h4 style="margin-bottom:8px;text-align:center;">像素画效果</h4>
+                        <div class="preview-box">
+                            <canvas id="pixelCanvas"></canvas>
+                        </div>
+                        <div style="text-align:center;margin-top:6px;font-size:0.85rem;color:var(--text2);">
+                            像素分辨率：<span id="pixelResolution">0×0</span>
+                            <span class="info-tag" style="margin-left:6px;" id="blockSizeTag">块:8px</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 像素块大小调节 -->
+                <div class="form-group">
+                    <label>🔲 像素块大小（每个像素块的边长）</label>
+                    <div class="inline-row">
+                        <input type="range" id="blockSizeSlider" min="2" max="80" value="8" step="1">
+                        <span id="blockSizeValue">8</span> px
+                    </div>
+                </div>
+
+                <!-- 目标宽度输入 -->
+                <div class="form-group">
+                    <label>📏 目标像素宽度（自动按比例计算高度）</label>
+                    <div class="inline-row">
+                        <span>宽</span>
+                        <input type="number" id="targetWidth" placeholder="自动" min="4" step="1">
+                        <span>像素</span>
+                        <button class="btn btn-outline" id="applyTargetBtn" style="padding:8px 16px;">应用</button>
+                        <span style="font-size:0.8rem;color:var(--muted);">输入后点击应用</span>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn" id="downloadBtn">📥 下载像素画</button>
+                    <button class="btn btn-outline" id="clearBtn">🗑️ 清空图片</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:30px;">
+            <h3 style="margin-bottom:12px;">📖 使用说明</h3>
+            <ul style="color:var(--text2);padding-left:20px;font-size:0.9rem;list-style-type:none;">
+                <li>🖼️ 上传图片 – 点击或拖拽图片文件，支持主流格式。</li>
+                <li>🔲 像素块大小 – 拖动滑块调节每个像素块的边长（2-80px），数值越大像素越粗犷。</li>
+                <li>📏 目标宽度 – 直接指定像素画横向的像素数量，系统自动计算像素块大小。</li>
+                <li>📥 下载 – 点击按钮保存像素画为高清 PNG 图片。</li>
+                <li>🗑️ 清空 – 一键清除当前图片与设置。</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span>© 2026 SwdTool</span>
+        <a href="index.html">返回首页</a>
+    </footer>
+
+    <script>
+        (function() {
+            // ========== 主题切换 ==========
+            const themeToggle = document.getElementById('themeToggle');
+            const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const applyTheme = (t) => {
+                document.documentElement.setAttribute('data-theme', t);
+                themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+                localStorage.setItem('swdtool-theme', t);
+            };
+            applyTheme(getTheme());
+            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
+
+            // ========== DOM 元素 ==========
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const editorSection = document.getElementById('editorSection');
+            const originalImg = document.getElementById('originalImg');
+            const pixelCanvas = document.getElementById('pixelCanvas');
+            const origSizeSpan = document.getElementById('origSize');
+            const pixelResolutionSpan = document.getElementById('pixelResolution');
+            const blockSizeTag = document.getElementById('blockSizeTag');
+            const blockSizeSlider = document.getElementById('blockSizeSlider');
+            const blockSizeValue = document.getElementById('blockSizeValue');
+            const targetWidthInput = document.getElementById('targetWidth');
+            const applyTargetBtn = document.getElementById('applyTargetBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const clearBtn = document.getElementById('clearBtn');
+
+            let originalImage = null;
+            let currentBlockSize = 8;
+
+            // ========== 上传处理 ==========
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', e => { if(e.target.files.length) loadImage(e.target.files[0]); });
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if(e.dataTransfer.files.length) loadImage(e.dataTransfer.files[0]);
+            });
+
+            function loadImage(file) {
+                if(!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        originalImage = img;
+                        originalImg.src = img.src;
+                        origSizeSpan.textContent = img.width + ' × ' + img.height;
+                        // 默认像素块大小
+                        currentBlockSize = 8;
+                        blockSizeSlider.value = 8;
+                        blockSizeValue.textContent = '8';
+                        // 更新目标宽度输入框
+                        const targetW = Math.round(img.width / currentBlockSize);
+                        targetWidthInput.value = targetW;
+                        targetWidthInput.placeholder = targetW;
+                        // 渲染像素画
+                        renderPixelArt();
+                        editorSection.style.display = 'block';
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // ========== 像素画渲染 ==========
+            function renderPixelArt() {
+                if (!originalImage) return;
+
+                const imgW = originalImage.width;
+                const imgH = originalImage.height;
+                const bs = currentBlockSize;
+
+                // 计算缩小后的分辨率
+                const smallW = Math.max(1, Math.round(imgW / bs));
+                const smallH = Math.max(1, Math.round(imgH / bs));
+
+                // 离屏 canvas（缩小绘制）
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = smallW;
+                offCanvas.height = smallH;
+                const offCtx = offCanvas.getContext('2d');
+                offCtx.imageSmoothingEnabled = true;
+                offCtx.imageSmoothingQuality = 'high';
+                offCtx.drawImage(originalImage, 0, 0, smallW, smallH);
+
+                // 显示 canvas（放大，使用最近邻插值实现像素块效果）
+                const displayW = smallW * bs;
+                const displayH = smallH * bs;
+                pixelCanvas.width = displayW;
+                pixelCanvas.height = displayH;
+                const ctx = pixelCanvas.getContext('2d');
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(offCanvas, 0, 0, displayW, displayH);
+
+                // 更新信息
+                pixelResolutionSpan.textContent = smallW + ' × ' + smallH;
+                blockSizeTag.textContent = '块:' + bs + 'px';
+            }
+
+            // ========== 像素块大小滑块 ==========
+            let sliderTimer;
+            blockSizeSlider.addEventListener('input', () => {
+                const val = parseInt(blockSizeSlider.value);
+                blockSizeValue.textContent = val;
+                currentBlockSize = val;
+                // 更新目标宽度
+                if (originalImage) {
+                    const targetW = Math.round(originalImage.width / val);
+                    targetWidthInput.value = targetW;
+                    targetWidthInput.placeholder = targetW;
+                }
+                clearTimeout(sliderTimer);
+                sliderTimer = setTimeout(renderPixelArt, 60);
+            });
+
+            // ========== 目标宽度输入 ==========
+            applyTargetBtn.addEventListener('click', () => {
+                if (!originalImage) return;
+                const targetW = parseInt(targetWidthInput.value);
+                if (isNaN(targetW) || targetW < 2) {
+                    alert('请输入有效的目标宽度（至少2像素）');
+                    return;
+                }
+                // 计算像素块大小
+                const bs = Math.max(1, Math.round(originalImage.width / targetW));
+                currentBlockSize = Math.max(2, Math.min(80, bs));
+                blockSizeSlider.value = currentBlockSize;
+                blockSizeValue.textContent = currentBlockSize;
+                targetWidthInput.value = Math.round(originalImage.width / currentBlockSize);
+                renderPixelArt();
+            });
+            targetWidthInput.addEventListener('keypress', e => {
+                if (e.key === 'Enter') applyTargetBtn.click();
+            });
+
+            // ========== 下载 ==========
+            downloadBtn.addEventListener('click', () => {
+                if (!originalImage || pixelCanvas.width === 0) {
+                    alert('请先上传图片生成像素画');
+                    return;
+                }
+                const link = document.createElement('a');
+                const resW = Math.round(originalImage.width / currentBlockSize);
+                const resH = Math.round(originalImage.height / currentBlockSize);
+                link.download = `像素画_${resW}x${resH}.png`;
+                link.href = pixelCanvas.toDataURL('image/png');
+                link.click();
+            });
+
+            // ========== 清空 ==========
+            clearBtn.addEventListener('click', () => {
+                originalImage = null;
+                originalImg.src = '';
+                origSizeSpan.textContent = '0×0';
+                pixelResolutionSpan.textContent = '0×0';
+                blockSizeTag.textContent = '块:8px';
+                pixelCanvas.width = 0;
+                pixelCanvas.height = 0;
+                blockSizeSlider.value = 8;
+                blockSizeValue.textContent = '8';
+                currentBlockSize = 8;
+                targetWidthInput.value = '';
+                targetWidthInput.placeholder = '自动';
+                editorSection.style.display = 'none';
+                fileInput.value = '';
+            });
+
+            // 初始状态
+            editorSection.style.display = 'none';
+            console.log('🎨 图片像素画工具已就绪');
+        })();
+    </script>
+</body>
+</html>
