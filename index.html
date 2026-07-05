@@ -216,7 +216,14 @@
             transform: translateY(-2px);
             border-color: var(--accent);
         }
-        .tool-card .tool-icon { font-size: 1.8rem; margin-bottom: 2px; }
+        .tool-card .tool-icon {
+            font-size: 1.8rem;
+            margin-bottom: 2px;
+            display: block;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+        }
         .tool-card h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); transition: color 0.3s ease; }
         .tool-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
         .tool-tags {
@@ -316,12 +323,19 @@
 
     <script>
         (function() {
-            // ========== 主题管理 ==========
+            // ========== 主题管理 (增强错误处理) ==========
             const themeToggle = document.getElementById('themeToggle');
             function getTheme() {
-                const saved = localStorage.getItem('swdtool-theme');
-                if (saved) return saved;
-                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+                try {
+                    const saved = localStorage.getItem('swdtool-theme');
+                    if (saved) return saved;
+                } catch (e) {
+                    console.warn('无法读取 localStorage，使用默认主题');
+                }
+                // 如果无法访问 matchMedia，直接返回 'light'
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    return 'dark';
+                }
                 return 'light';
             }
             function applyTheme(theme) {
@@ -332,20 +346,31 @@
                     document.documentElement.removeAttribute('data-theme');
                     themeToggle.textContent = '🌙';
                 }
-                localStorage.setItem('swdtool-theme', theme);
+                try {
+                    localStorage.setItem('swdtool-theme', theme);
+                } catch (e) {
+                    console.warn('无法保存主题设置');
+                }
+                // 重新渲染图标
+                renderTools(searchInput.value);
             }
-            applyTheme(getTheme());
+            const currentTheme = getTheme();
+            applyTheme(currentTheme);
             themeToggle.addEventListener('click', () => {
                 const newTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
                 applyTheme(newTheme);
             });
             if (window.matchMedia) {
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                    if (!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light');
+                    try {
+                        if (!localStorage.getItem('swdtool-theme')) {
+                            applyTheme(e.matches ? 'dark' : 'light');
+                        }
+                    } catch (ex) {}
                 });
             }
 
-            // ========== 工具数据（含标签） ==========
+            // ========== 工具数据 ==========
             const toolsData = [
                 {
                     id: 'base64',
@@ -441,6 +466,9 @@
             const emptyState = document.getElementById('emptyState');
             const searchInput = document.getElementById('searchInput');
 
+            // 判断是否 file:// 协议
+            const isFileProtocol = window.location.protocol === 'file:';
+
             function renderTools(filterText = '') {
                 const query = filterText.trim().toLowerCase();
                 const filtered = toolsData.filter(tool => {
@@ -454,21 +482,35 @@
                     toolsGrid.innerHTML = '';
                     toolsGrid.style.display = 'none';
                     emptyState.style.display = 'block';
-                } else {
-                    toolsGrid.style.display = 'grid';
-                    emptyState.style.display = 'none';
-                    toolsGrid.innerHTML = filtered.map(tool => {
-                        const tagsHtml = tool.tags.map(t => `<span class="tool-tag">${t}</span>`).join('');
-                        return `
-                            <a href="${tool.url}" class="tool-card">
-                                <div class="tool-icon">${tool.icon}</div>
-                                <h3>${tool.name}</h3>
-                                <p>${tool.description}</p>
-                                <div class="tool-tags">${tagsHtml}</div>
-                            </a>
-                        `;
-                    }).join('');
+                    return;
                 }
+
+                toolsGrid.style.display = 'grid';
+                emptyState.style.display = 'none';
+
+                const currentTheme = getTheme();
+                const themeSuffix = currentTheme === 'dark' ? '-b' : '-w';
+
+                toolsGrid.innerHTML = filtered.map(tool => {
+                    // 如果是 file 协议，直接使用 emoji；否则尝试加载图标，失败则用 emoji 回退
+                    let iconHtml;
+                    if (isFileProtocol) {
+                        iconHtml = `<span class="tool-icon">${tool.icon}</span>`;
+                    } else {
+                        const iconPath = `iconpng/${tool.id}${themeSuffix}.png`;
+                        iconHtml = `<img class="tool-icon" src="${iconPath}" alt="${tool.name}" loading="lazy" onerror="this.outerHTML='<span class=\\'tool-icon\\' style=\\'font-size:1.8rem;\\'>${tool.icon}</span>'">`;
+                    }
+
+                    const tagsHtml = tool.tags.map(t => `<span class="tool-tag">${t}</span>`).join('');
+                    return `
+                        <a href="${tool.url}" class="tool-card">
+                            ${iconHtml}
+                            <h3>${tool.name}</h3>
+                            <p>${tool.description}</p>
+                            <div class="tool-tags">${tagsHtml}</div>
+                        </a>
+                    `;
+                }).join('');
             }
 
             renderTools();
