@@ -21,8 +21,6 @@
             --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
             --shadow-hover: 0 10px 25px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.04);
             --transition: 0.2s ease;
-            --toggle-bg: #e5e7eb;
-            --toggle-dot: #ffffff;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             line-height: 1.5;
             color: var(--text-primary);
@@ -40,8 +38,6 @@
             --icon-color: #6c8cff;
             --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.03) inset;
             --shadow-hover: 0 10px 25px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.05) inset;
-            --toggle-bg: #3a4060;
-            --toggle-dot: #6c8cff;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -82,7 +78,6 @@
             color: var(--text-primary);
             font-weight: 700;
             font-size: 1.25rem;
-            letter-spacing: -0.02em;
             transition: color 0.3s ease;
         }
         .navbar-logo .logo-mark {
@@ -147,7 +142,6 @@
         .page-header h1 {
             font-size: 2.2rem;
             font-weight: 800;
-            letter-spacing: -0.03em;
             margin-bottom: 12px;
             color: var(--text-primary);
             transition: color 0.3s ease;
@@ -225,7 +219,7 @@
             display: block;
             color: var(--icon-color);
         }
-        .tool-card h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); transition: color 0.3s ease; }
+        .tool-card h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
         .tool-card p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
         .tool-tags {
             display: flex;
@@ -251,7 +245,6 @@
             border-radius: var(--radius);
             border: 1px dashed var(--border);
             color: var(--text-secondary);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         .empty-state .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.7; }
         .empty-state h2 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
@@ -268,9 +261,8 @@
             gap: 16px;
             flex-wrap: wrap;
             background: var(--surface);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
-        .footer a { color: var(--text-secondary); text-decoration: none; transition: color 0.3s ease; }
+        .footer a { color: var(--text-secondary); text-decoration: none; }
         .footer a:hover { color: var(--accent); }
 
         @media (max-width: 640px) {
@@ -336,9 +328,7 @@
                     const saved = localStorage.getItem('swdtool-theme');
                     if (saved) return saved;
                 } catch (e) {}
-                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    return 'dark';
-                }
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
                 return 'light';
             }
 
@@ -350,143 +340,80 @@
                     document.documentElement.removeAttribute('data-theme');
                     themeToggle.textContent = '🌙';
                 }
-                try {
-                    localStorage.setItem('swdtool-theme', theme);
-                } catch (e) {}
-                renderTools(searchInput.value);
+                try { localStorage.setItem('swdtool-theme', theme); } catch (e) {}
+                // 延迟更新图标，优先完成颜色切换
+                requestAnimationFrame(() => {
+                    updateIcons();
+                });
             }
 
-            const currentTheme = getTheme();
-            applyTheme(currentTheme);
+            function updateIcons() {
+                const currentTheme = getTheme();
+                const suffix = currentTheme === 'dark' ? '-b' : '-w';
+                const icons = document.querySelectorAll('.tool-icon[data-filename]');
+                icons.forEach(img => {
+                    const fileName = img.getAttribute('data-filename');
+                    img.src = `iconsvg/${fileName}${suffix}.svg`;
+                });
+            }
+
+            applyTheme(getTheme());
             themeToggle.addEventListener('click', () => {
                 const newTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
                 applyTheme(newTheme);
             });
             if (window.matchMedia) {
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                    try {
-                        if (!localStorage.getItem('swdtool-theme')) {
-                            applyTheme(e.matches ? 'dark' : 'light');
-                        }
-                    } catch (ex) {}
+                    if (!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light');
                 });
             }
 
-            // ========== 内联 SVG 回退图标（基于工具 id 索引） ==========
+            // ========== 内联 SVG 回退图标定义 ==========
             const inlineSvgIcons = {
-                'TexttoBase64': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="8" width="28" height="24" rx="3" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 16h16M12 20h12M12 24h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>`,
-                'MD5text': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="12" width="24" height="20" rx="4" stroke="currentColor" stroke-width="2.5"/><path d="M14 20h12M14 25h8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="16" r="1.5" fill="currentColor"/></svg>`,
-                'JSobfuscator': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 10h16a4 4 0 014 4v12a4 4 0 01-4 4H12a4 4 0 01-4-4V14a4 4 0 014-4z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 16l4 4-4 4M22 24l4-4-4-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-                'FileToZIP': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 8h12l6 10v12a4 4 0 01-4 4H12a4 4 0 01-4-4V18l6-10z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 8v10H8" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M17 18v-3l3-4h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
-                'ZIPToFile': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="6" width="16" height="8" rx="2" stroke="currentColor" stroke-width="2.5"/><path d="M14 14v10a4 4 0 004 4h4a4 4 0 004-4V14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M20 20v10M16 30l4 4 4-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-                'PhotoSheet': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="6" width="30" height="30" rx="2" stroke="currentColor" stroke-width="2.5"/><rect x="10" y="10" width="8" height="10" rx="1" stroke="currentColor" stroke-width="2"/><rect x="22" y="10" width="8" height="10" rx="1" stroke="currentColor" stroke-width="2"/><rect x="10" y="24" width="8" height="8" rx="1" stroke="currentColor" stroke-width="2"/><rect x="22" y="24" width="8" height="8" rx="1" stroke="currentColor" stroke-width="2"/></svg>`,
-                'SetPhotoSize': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="8" width="28" height="24" rx="3" stroke="currentColor" stroke-width="2.5"/><path d="M16 16l-4 4M20 16l-8 8M24 20l4 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="20" r="2" fill="currentColor"/></svg>`,
-                'GenerateQRcode': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="30" height="30" rx="2" stroke="currentColor" stroke-width="2.5"/><rect x="10" y="10" width="6" height="6" fill="currentColor"/><rect x="24" y="10" width="6" height="6" fill="currentColor"/><rect x="10" y="24" width="6" height="6" fill="currentColor"/><rect x="24" y="24" width="2" height="2" fill="currentColor"/><rect x="28" y="24" width="2" height="2" fill="currentColor"/><rect x="24" y="28" width="2" height="2" fill="currentColor"/></svg>`,
-                'PDFViewer': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8h16l8 10v16a2 2 0 01-2 2H8a2 2 0 01-2-2V10a2 2 0 012-2z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 8v10h10" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M12 26h16M12 22h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
-                'PixelArt': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="32" height="32" rx="2" stroke="currentColor" stroke-width="2.5"/><rect x="8" y="8" width="8" height="8" fill="currentColor"/><rect x="24" y="8" width="8" height="8" fill="currentColor"/><rect x="16" y="16" width="8" height="8" fill="currentColor"/><rect x="8" y="24" width="8" height="8" fill="currentColor"/></svg>`,
-                'ImageConverter': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="8" width="14" height="20" rx="3" stroke="currentColor" stroke-width="2.5"/><path d="M4 20l4-4 3 3 3-3 4 4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M28 14l4 6-4 6M24 18l-4 6 4 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+                'TexttoBase64': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><rect x="6" y="8" width="28" height="24" rx="3" stroke="currentColor" stroke-width="2.5"/><path d="M12 16h16M12 20h12M12 24h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+                'MD5text': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><rect x="8" y="12" width="24" height="20" rx="4" stroke="currentColor" stroke-width="2.5"/><path d="M14 20h12M14 25h8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="20" cy="16" r="1.5" fill="currentColor"/></svg>`,
+                'JSobfuscator': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><path d="M12 10h16a4 4 0 014 4v12a4 4 0 01-4 4H12a4 4 0 01-4-4V14a4 4 0 014-4z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 16l4 4-4 4M22 24l4-4-4-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+                'FileToZIP': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><path d="M14 8h12l6 10v12a4 4 0 01-4 4H12a4 4 0 01-4-4V18l6-10z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 8v10H8" stroke="currentColor" stroke-width="2.5"/><path d="M17 18v-3l3-4h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+                'ZIPToFile': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><rect x="12" y="6" width="16" height="8" rx="2" stroke="currentColor" stroke-width="2.5"/><path d="M14 14v10a4 4 0 004 4h4a4 4 0 004-4V14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M20 20v10M16 30l4 4 4-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+                'PhotoSheet': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><rect x="5" y="6" width="30" height="30" rx="2" stroke="currentColor" stroke-width="2.5"/><rect x="10" y="10" width="8" height="10" rx="1" stroke="currentColor" stroke-width="2"/><rect x="22" y="10" width="8" height="10" rx="1" stroke="currentColor" stroke-width="2"/><rect x="10" y="24" width="8" height="8" rx="1" stroke="currentColor" stroke-width="2"/><rect x="22" y="24" width="8" height="8" rx="1" stroke="currentColor" stroke-width="2"/></svg>`,
+                'SetPhotoSize': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><rect x="6" y="8" width="28" height="24" rx="3" stroke="currentColor" stroke-width="2.5"/><path d="M16 16l-4 4M20 16l-8 8M24 20l4 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="20" r="2" fill="currentColor"/></svg>`,
+                'GenerateQRcode': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><rect x="5" y="5" width="30" height="30" rx="2" stroke="currentColor" stroke-width="2.5"/><rect x="10" y="10" width="6" height="6" fill="currentColor"/><rect x="24" y="10" width="6" height="6" fill="currentColor"/><rect x="10" y="24" width="6" height="6" fill="currentColor"/><rect x="24" y="24" width="2" height="2" fill="currentColor"/><rect x="28" y="24" width="2" height="2" fill="currentColor"/><rect x="24" y="28" width="2" height="2" fill="currentColor"/></svg>`,
+                'PDFViewer': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><path d="M8 8h16l8 10v16a2 2 0 01-2 2H8a2 2 0 01-2-2V10a2 2 0 012-2z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 8v10h10" stroke="currentColor" stroke-width="2.5"/><path d="M12 26h16M12 22h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+                'PixelArt': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="32" height="32" rx="2" stroke="currentColor" stroke-width="2.5"/><rect x="8" y="8" width="8" height="8" fill="currentColor"/><rect x="24" y="8" width="8" height="8" fill="currentColor"/><rect x="16" y="16" width="8" height="8" fill="currentColor"/><rect x="8" y="24" width="8" height="8" fill="currentColor"/></svg>`,
+                'ImageConverter': `<svg class="tool-icon" viewBox="0 0 40 40" fill="none"><rect x="4" y="8" width="14" height="20" rx="3" stroke="currentColor" stroke-width="2.5"/><path d="M4 20l4-4 3 3 3-3 4 4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M28 14l4 6-4 6M24 18l-4 6 4 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>`
             };
 
             // 图标加载失败时的处理函数
-            window.handleIconError = function(img, baseName) {
-                if (inlineSvgIcons[baseName]) {
-                    img.outerHTML = inlineSvgIcons[baseName];
+            window.handleIconError = function(img, fileName) {
+                if (inlineSvgIcons[fileName]) {
+                    img.outerHTML = inlineSvgIcons[fileName];
                 }
             };
 
             // ========== 工具数据 ==========
             const toolsData = [
-                {
-                    id: 'base64',
-                    name: 'Base64 工具',
-                    description: '在线 Base64 编码与解码，支持 UTF-8 文本',
-                    url: 'TexttoBase64.html',
-                    tags: ['URL编/解码', 'URL16进制编/解码', 'Base64编/解码', 'Base32编/解码', 'Escape编/解码', 'Gzip编/解码']
-                },
-                {
-                    id: 'md5',
-                    name: 'MD5 加密',
-                    description: '将文本转换为 MD5 哈希值，支持32/16位大小写',
-                    url: 'MD5text.html',
-                    tags: ['MD5加密', '文本加密', '在线哈希', '数据校验32/16位MD5', '安全加密']
-                },
-                {
-                    id: 'obfuscator',
-                    name: 'JS 代码混淆',
-                    description: '高级混淆加密，变量名混淆、字符串加密、控制流扁平化、调试保护',
-                    url: 'JSobfuscator.html',
-                    tags: ['代码混淆', 'JS防盗用', 'JS加密', '域名锁定', '多级混淆', 'JS防复制']
-                },
-                {
-                    id: 'zip',
-                    name: '多文件ZIP打包',
-                    description: '批量选择文件，纯前端打包为ZIP下载，支持去重',
-                    url: 'FileToZIP.html',
-                    tags: ['文件压缩', 'ZIP打包', '本地文件打包', '多文件压缩', '文件去重压缩', '离线ZIP打包']
-                },
-                {
-                    id: 'unzip',
-                    name: 'ZIP在线解压',
-                    description: '上传ZIP文件，在线预览内容并单独下载所需文件',
-                    url: 'ZIPToFile.html',
-                    tags: ['在线ZIP解压', '免安装解压', '单文件下载', '本地解压', '免费解压工具', 'ZIP文件提取']
-                },
-                {
-                    id: 'photosheet',
-                    name: 'A4纸自动排版',
-                    description: '上传照片，自动排版证件照到A4纸，支持自定义边距',
-                    url: 'PhotoSheet.html',
-                    tags: ['证件照排版', 'A4排版', '照片排版','图片排版', '打印排版', '一寸照', '二寸照']
-                },
-                {
-                    id: 'resize',
-                    name: '图片尺寸调整',
-                    description: '上传图片，滑块缩放或自定义宽高，本地高清下载',
-                    url: 'SetPhotoSize.html',
-                    tags: ['图片尺寸调整', '修改图片大小', '本地图片处理', 'JPG调整大小', 'PNG缩放']
-                },
-                {
-                    id: 'qrcode',
-                    name: '在线二维码生成',
-                    description: '文本/链接生成标准二维码，支持容错率、尺寸、边距设置',
-                    url: 'GenerateQRcode.html',
-                    tags: ['二维码生成', '容错率设置', '二维码导出', '点状二维码', '二维码尺寸']
-                },
-                {
-                    id: 'pdfviewer',
-                    name: 'PDF在线阅读器',
-                    description: '在线预览PDF文档，支持翻页、缩放、拖拽上传，高清渲染',
-                    url: 'PDFViewer.html',
-                    tags: ['PDF阅读器', 'PDF查看器', 'PDF翻页', 'PDF页缩放', '文档预览', 'PDF预览']
-                },
-                {
-                    id: 'pixelart',
-                    name: '图片像素画',
-                    description: '上传图片转换为像素画风格，支持调节像素块大小与目标分辨率',
-                    url: 'PixelArt.html',
-                    tags: ['像素画', '图片像素化', '像素风格', '图片处理', '像素转换', '低分辨率']
-                },
-                {
-                    id: 'imageconverter',
-                    name: '图片格式批量转换',
-                    description: '批量上传图片，统一转换为 PNG、JPEG、WebP、ICO 或 SVG 格式',
-                    url: 'ImageConverter.html',
-                    tags: ['图片格式转换', '批量转换', 'PNG转JPG', 'JPG转PNG', 'ICO生成', 'WebP转换', 'SVG转换']
-                }
+                { name: 'Base64 工具', description: '在线 Base64 编码与解码，支持 UTF-8 文本', url: 'TexttoBase64.html', tags: ['URL编/解码', 'URL16进制编/解码', 'Base64编/解码', 'Base32编/解码', 'Escape编/解码', 'Gzip编/解码'] },
+                { name: 'MD5 加密', description: '将文本转换为 MD5 哈希值，支持32/16位大小写', url: 'MD5text.html', tags: ['MD5加密', '文本加密', '在线哈希', '数据校验32/16位MD5', '安全加密'] },
+                { name: 'JS 代码混淆', description: '高级混淆加密，变量名混淆、字符串加密、控制流扁平化、调试保护', url: 'JSobfuscator.html', tags: ['代码混淆', 'JS防盗用', 'JS加密', '域名锁定', '多级混淆', 'JS防复制'] },
+                { name: '多文件ZIP打包', description: '批量选择文件，纯前端打包为ZIP下载，支持去重', url: 'FileToZIP.html', tags: ['文件压缩', 'ZIP打包', '本地文件打包', '多文件压缩', '文件去重压缩', '离线ZIP打包'] },
+                { name: 'ZIP在线解压', description: '上传ZIP文件，在线预览内容并单独下载所需文件', url: 'ZIPToFile.html', tags: ['在线ZIP解压', '免安装解压', '单文件下载', '本地解压', '免费解压工具', 'ZIP文件提取'] },
+                { name: 'A4纸自动排版', description: '上传照片，自动排版证件照到A4纸，支持自定义边距', url: 'PhotoSheet.html', tags: ['证件照排版', 'A4排版', '照片排版','图片排版', '打印排版', '一寸照', '二寸照'] },
+                { name: '图片尺寸调整', description: '上传图片，滑块缩放或自定义宽高，本地高清下载', url: 'SetPhotoSize.html', tags: ['图片尺寸调整', '修改图片大小', '本地图片处理', 'JPG调整大小', 'PNG缩放'] },
+                { name: '在线二维码生成', description: '文本/链接生成标准二维码，支持容错率、尺寸、边距设置', url: 'GenerateQRcode.html', tags: ['二维码生成', '容错率设置', '二维码导出', '点状二维码', '二维码尺寸'] },
+                { name: 'PDF在线阅读器', description: '在线预览PDF文档，支持翻页、缩放、拖拽上传，高清渲染', url: 'PDFViewer.html', tags: ['PDF阅读器', 'PDF查看器', 'PDF翻页', 'PDF页缩放', '文档预览', 'PDF预览'] },
+                { name: '图片像素画', description: '上传图片转换为像素画风格，支持调节像素块大小与目标分辨率', url: 'PixelArt.html', tags: ['像素画', '图片像素化', '像素风格', '图片处理', '像素转换', '低分辨率'] },
+                { name: '图片格式批量转换', description: '批量上传图片，统一转换为 PNG、JPEG、WebP、ICO 或 SVG 格式', url: 'ImageConverter.html', tags: ['图片格式转换', '批量转换', 'PNG转JPG', 'JPG转PNG', 'ICO生成', 'WebP转换', 'SVG转换'] }
             ];
 
             // ========== 渲染工具卡片 ==========
             function renderTools(filterText = '') {
                 const query = filterText.trim().toLowerCase();
-                const filtered = toolsData.filter(tool => {
+                const filtered = toolsData.filter(t => {
                     if (!query) return true;
-                    return tool.name.toLowerCase().includes(query) ||
-                           tool.description.toLowerCase().includes(query) ||
-                           tool.tags.some(tag => tag.toLowerCase().includes(query));
+                    return t.name.toLowerCase().includes(query) || t.description.toLowerCase().includes(query) || t.tags.some(tag => tag.toLowerCase().includes(query));
                 });
 
                 if (filtered.length === 0) {
-                    toolsGrid.innerHTML = '';
                     toolsGrid.style.display = 'none';
                     emptyState.style.display = 'block';
                     return;
@@ -496,16 +423,15 @@
                 emptyState.style.display = 'none';
 
                 const currentTheme = getTheme();
-                const themeSuffix = currentTheme === 'dark' ? '-b' : '-w';
+                const suffix = currentTheme === 'dark' ? '-b' : '-w';
 
                 toolsGrid.innerHTML = filtered.map(tool => {
-                    // 从 URL 中提取文件名（不含扩展名）作为图标基础名
                     const fileName = tool.url.replace(/\.html$/, '');
-                    const externalSvgPath = `iconsvg/${fileName}${themeSuffix}.svg`;
+                    const iconSrc = `iconsvg/${fileName}${suffix}.svg`;
                     const tagsHtml = tool.tags.map(t => `<span class="tool-tag">${t}</span>`).join('');
                     return `
                         <a href="${tool.url}" class="tool-card">
-                            <img class="tool-icon" src="${externalSvgPath}" alt="${tool.name}" loading="lazy"
+                            <img class="tool-icon" src="${iconSrc}" data-filename="${fileName}" alt="${tool.name}" loading="lazy"
                                  onerror="window.handleIconError(this, '${fileName}')">
                             <h3>${tool.name}</h3>
                             <p>${tool.description}</p>
@@ -518,10 +444,8 @@
             // 初始渲染
             renderTools();
 
-            // 搜索事件
-            searchInput.addEventListener('input', (e) => {
-                renderTools(e.target.value);
-            });
+            // 搜索
+            searchInput.addEventListener('input', (e) => renderTools(e.target.value));
 
             console.log('🛠️ SwdTool 已就绪，当前工具数量：' + toolsData.length);
         })();
