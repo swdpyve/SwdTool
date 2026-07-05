@@ -93,7 +93,7 @@
     <main class="container">
         <div class="header">
             <h1>🖼️ 图片格式批量转换</h1>
-            <p>上传多个图片，统一转换为 PNG、JPEG、WebP 或 ICO 格式</p>
+            <p>上传多个图片，统一转换为 PNG、JPEG、WebP、ICO 或 SVG 格式</p>
         </div>
 
         <div class="card">
@@ -114,6 +114,7 @@
                         <option value="jpeg">JPEG</option>
                         <option value="webp">WebP</option>
                         <option value="ico">ICO</option>
+                        <option value="svg">SVG</option>
                     </select>
                     <button class="btn" id="convertAllBtn">✨ 开始转换</button>
                     <span style="color:var(--muted);font-size:0.85rem;">（支持选择目标格式后再点击转换）</span>
@@ -132,7 +133,7 @@
             <h3 style="margin-bottom:12px;">📖 使用说明</h3>
             <ul style="color:var(--text2);padding-left:20px;font-size:0.9rem;list-style-type:none;">
                 <li>🖼️ 上传图片 – 支持一次选择多个文件或拖拽添加，格式不限（含 SVG）。</li>
-                <li>🎯 选择目标格式 – 从 PNG、JPEG、WebP、ICO 中任选一种。</li>
+                <li>🎯 选择目标格式 – 从 PNG、JPEG、WebP、ICO、SVG 中任选一种。</li>
                 <li>✨ 开始转换 – 点击按钮后，所有图片将转换为统一格式并显示预览与大小。</li>
                 <li>⬇️ 单独下载 – 每行右侧可下载转换后的单张图片。</li>
                 <li>📦 打包下载 – 将所有转换结果打包为 ZIP 文件一键下载。</li>
@@ -211,6 +212,21 @@
                 return new Blob([uint8], { type: 'image/x-icon' });
             }
 
+            // 生成 SVG 包裹图片
+            function createSVGFromImage(img, width, height) {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const dataUrl = canvas.toDataURL('image/png');
+                const svgString = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <image x="0" y="0" width="${width}" height="${height}" xlink:href="${dataUrl}" />
+</svg>`;
+                return new Blob([svgString], { type: 'image/svg+xml' });
+            }
+
             // 通过 canvas 转换图片
             async function convertImage(img, format) {
                 const canvas = document.createElement('canvas');
@@ -220,6 +236,11 @@
                 canvas.height = h;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
+
+                if (format === 'svg') {
+                    return await createSVGFromImage(img, w, h);
+                }
+
                 const mimeMap = {
                     png: 'image/png',
                     jpeg: 'image/jpeg',
@@ -327,7 +348,8 @@
             window.downloadSingle = function(index) {
                 const item = items[index];
                 if (!item || !item.convertedBlob) return;
-                const ext = targetFormat.value === 'jpeg' ? 'jpg' : targetFormat.value;
+                const fmt = targetFormat.value;
+                const ext = fmt === 'jpeg' ? 'jpg' : fmt;
                 const fileName = item.file.name.replace(/\.[^.]+$/, '') + '.' + ext;
                 const url = URL.createObjectURL(item.convertedBlob);
                 const a = document.createElement('a');
@@ -369,7 +391,8 @@
                 const convertedItems = items.filter(it => it.convertedBlob);
                 if (convertedItems.length === 0) return;
                 const zip = new JSZip();
-                const ext = targetFormat.value === 'jpeg' ? 'jpg' : targetFormat.value;
+                const fmt = targetFormat.value;
+                const ext = fmt === 'jpeg' ? 'jpg' : fmt;
                 for (const item of convertedItems) {
                     const fileName = item.file.name.replace(/\.[^.]+$/, '') + '.' + ext;
                     zip.file(fileName, item.convertedBlob);
