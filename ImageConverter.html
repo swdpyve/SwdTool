@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片格式转换 - SwdTool</title>
+    <link rel="icon" href="logo.ico" sizes="any">
+    <!-- 本地 JSZip 库 -->
+    <script src="js/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1e293b;
+            --text2: #64748b;
+            --muted: #94a3b8;
+            --accent: #4f6ef7;
+            --accent-light: #eef1ff;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --transition: 0.2s ease;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+        }
+        [data-theme="dark"] {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2f3d;
+            --text: #e4e6ed;
+            --text2: #8b8fa7;
+            --muted: #5c6078;
+            --accent: #6c8cff;
+            --accent-light: rgba(108,140,255,0.12);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;transition:background-color 0.3s}
+        .navbar{backdrop-filter:blur(12px);background:rgba(255,255,255,0.8);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;transition:background 0.3s}
+        [data-theme="dark"] .navbar{background:rgba(15,17,23,0.8)}
+        .navbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font-weight:700;font-size:1.2rem}
+        .logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600}
+        .nav-links{display:flex;gap:8px;list-style:none;align-items:center}
+        .nav-links a{text-decoration:none;color:var(--text2);font-size:0.9rem;padding:6px 14px;border-radius:20px;transition:var(--transition)}
+        .nav-links a:hover{background:var(--accent-light);color:var(--accent)}
+        .theme-toggle{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--text);transition:var(--transition)}
+        .theme-toggle:hover{background:var(--accent-light);border-color:var(--accent)}
+        .container{max-width:1000px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
+        .header{text-align:center;margin-bottom:32px}
+        .header h1{font-size:2rem;font-weight:700}
+        .header p{color:var(--text2)}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
+        .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:30px;text-align:center;cursor:pointer;transition:var(--transition);margin-bottom:20px}
+        .upload-area:hover,.upload-area.dragover{border-color:var(--accent);background:var(--accent-light)}
+        .upload-area input[type=file]{display:none}
+        .tool-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+        .tool-row label{font-weight:500;font-size:0.9rem;color:var(--text)}
+        .tool-row select{padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:0.9rem}
+        .file-list{margin-top:16px}
+        .file-item{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--bg);flex-wrap:wrap}
+        .file-item img{width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0}
+        .file-item .info{flex:1;min-width:140px}
+        .file-item .info .name{font-weight:600;color:var(--text);word-break:break-all}
+        .file-item .info .meta{font-size:0.8rem;color:var(--text2)}
+        .file-item .status{font-size:0.85rem;font-weight:500;min-width:70px;text-align:center}
+        .file-item .status.converted{color:#10b981}
+        .file-item .status.pending{color:var(--muted)}
+        .file-item .actions{display:flex;gap:8px;align-items:center}
+        .btn{padding:8px 16px;border-radius:20px;font-weight:600;font-size:0.85rem;border:none;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(79,110,247,0.25)}
+        .btn:hover{background:#3d5ce5;box-shadow:0 4px 12px rgba(79,110,247,0.35)}
+        [data-theme="dark"] .btn:hover{background:#5b7ef5}
+        .btn-outline{background:var(--surface);border:1px solid var(--border);color:var(--text);box-shadow:none}
+        .btn-outline:hover{background:#f1f5f9}
+        [data-theme="dark"] .btn-outline:hover{background:rgba(255,255,255,0.05)}
+        .btn-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+        .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto;transition:background 0.3s}
+        .footer a{color:var(--text2);text-decoration:none}
+        .empty-message{text-align:center;color:var(--muted);padding:32px 0}
+        @media(max-width:640px){.container{padding:24px 16px}.file-item{flex-direction:column;align-items:flex-start}}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="index.html" class="logo"><span class="logo-mark">Sw</span>SwdTool</a>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><button class="theme-toggle" id="themeToggle" title="切换亮色/暗色模式">🌙</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="header">
+            <h1>🖼️ 图片格式批量转换</h1>
+            <p>上传多个图片，统一转换为 PNG、JPEG、WebP 或 ICO 格式</p>
+        </div>
+
+        <div class="card">
+            <!-- 上传区域 -->
+            <div class="upload-area" id="dropZone">
+                <div style="font-size:2.5rem;margin-bottom:8px;">📂</div>
+                <strong>点击或拖拽上传图片（可多选，支持多种格式）</strong>
+                <div style="color:var(--muted);font-size:0.9rem;">支持 PNG, JPG, JPEG, GIF, BMP, WEBP, SVG 等</div>
+                <input type="file" id="fileInput" accept="image/*,.svg" multiple>
+            </div>
+
+            <!-- 格式选择与操作 -->
+            <div id="controlSection" style="display:none;">
+                <div class="tool-row">
+                    <label>🎯 目标格式：</label>
+                    <select id="targetFormat">
+                        <option value="png" selected>PNG</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="webp">WebP</option>
+                        <option value="ico">ICO</option>
+                    </select>
+                    <button class="btn" id="convertAllBtn">✨ 开始转换</button>
+                    <span style="color:var(--muted);font-size:0.85rem;">（支持选择目标格式后再点击转换）</span>
+                </div>
+
+                <h3 style="margin-bottom:12px;">文件列表（<span id="fileCount">0</span>）</h3>
+                <div class="file-list" id="fileList"></div>
+                <div class="btn-group">
+                    <button class="btn" id="downloadAllBtn" disabled>📦 打包下载全部 (ZIP)</button>
+                    <button class="btn btn-outline" id="clearBtn">🗑️ 清空列表</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:30px;">
+            <h3 style="margin-bottom:12px;">📖 使用说明</h3>
+            <ul style="color:var(--text2);padding-left:20px;font-size:0.9rem;list-style-type:none;">
+                <li>🖼️ 上传图片 – 支持一次选择多个文件或拖拽添加，格式不限（含 SVG）。</li>
+                <li>🎯 选择目标格式 – 从 PNG、JPEG、WebP、ICO 中任选一种。</li>
+                <li>✨ 开始转换 – 点击按钮后，所有图片将转换为统一格式并显示预览与大小。</li>
+                <li>⬇️ 单独下载 – 每行右侧可下载转换后的单张图片。</li>
+                <li>📦 打包下载 – 将所有转换结果打包为 ZIP 文件一键下载。</li>
+                <li>🔒 本地处理 – 所有操作在浏览器中完成，文件不会上传。</li>
+                <li>🗑️ 清空 – 一键清除所有文件与转换结果。</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <span>© 2026 SwdTool</span>
+        <a href="index.html">返回首页</a>
+    </footer>
+
+    <script>
+        (function() {
+            // 主题切换
+            const themeToggle = document.getElementById('themeToggle');
+            const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const applyTheme = (t) => {
+                document.documentElement.setAttribute('data-theme', t);
+                themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+                localStorage.setItem('swdtool-theme', t);
+            };
+            applyTheme(getTheme());
+            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
+
+            // DOM 元素
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const controlSection = document.getElementById('controlSection');
+            const targetFormat = document.getElementById('targetFormat');
+            const convertAllBtn = document.getElementById('convertAllBtn');
+            const fileList = document.getElementById('fileList');
+            const fileCountSpan = document.getElementById('fileCount');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
+            const clearBtn = document.getElementById('clearBtn');
+
+            // 文件条目结构
+            let items = [];
+
+            function fileKey(file) { return `${file.name}_${file.size}_${file.lastModified}`; }
+
+            function formatSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024, sizes = ['B','KB','MB'];
+                const i = Math.floor(Math.log(bytes)/Math.log(k));
+                return parseFloat((bytes/Math.pow(k,i)).toFixed(1))+' '+sizes[i];
+            }
+
+            // ICO 生成：将 PNG Blob 包装为 ICO 文件
+            async function createICOFromPNG(pngBlob, width, height) {
+                const arrayBuffer = await pngBlob.arrayBuffer();
+                const pngData = new Uint8Array(arrayBuffer);
+                const icoWidth = width > 256 ? 0 : width;
+                const icoHeight = height > 256 ? 0 : height;
+                const headerSize = 6;
+                const dirEntrySize = 16;
+                const dataOffset = headerSize + dirEntrySize;
+                const buffer = new ArrayBuffer(dataOffset + pngData.length);
+                const view = new DataView(buffer);
+                view.setUint16(0, 0, true);
+                view.setUint16(2, 1, true);
+                view.setUint16(4, 1, true);
+                view.setUint8(headerSize, icoWidth);
+                view.setUint8(headerSize+1, icoHeight);
+                view.setUint8(headerSize+2, 0);
+                view.setUint8(headerSize+3, 0);
+                view.setUint16(headerSize+4, 1, true);
+                view.setUint16(headerSize+6, 32, true);
+                view.setUint32(headerSize+8, pngData.length, true);
+                view.setUint32(headerSize+12, dataOffset, true);
+                const uint8 = new Uint8Array(buffer);
+                uint8.set(pngData, dataOffset);
+                return new Blob([uint8], { type: 'image/x-icon' });
+            }
+
+            // 通过 canvas 转换图片
+            async function convertImage(img, format) {
+                const canvas = document.createElement('canvas');
+                const w = img.naturalWidth || img.width;
+                const h = img.naturalHeight || img.height;
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const mimeMap = {
+                    png: 'image/png',
+                    jpeg: 'image/jpeg',
+                    webp: 'image/webp',
+                    ico: 'image/png'
+                };
+                const mime = mimeMap[format] || 'image/png';
+                const quality = format === 'jpeg' ? 0.92 : undefined;
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, mime, quality));
+                if (format === 'ico') {
+                    return await createICOFromPNG(blob, w, h);
+                }
+                return blob;
+            }
+
+            // 加载图片（含 SVG 处理）
+            async function loadImageFromFile(file) {
+                if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
+                    const text = await file.text();
+                    const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(text);
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                        img.src = dataUrl;
+                    });
+                } else {
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = reject;
+                        img.src = URL.createObjectURL(file);
+                    });
+                }
+            }
+
+            // 添加文件
+            async function addFiles(files) {
+                let addedCount = 0;
+                const existingKeys = new Set(items.map(it => fileKey(it.file)));
+                for (const file of files) {
+                    const key = fileKey(file);
+                    if (existingKeys.has(key)) continue;
+                    existingKeys.add(key);
+                    const objectUrl = URL.createObjectURL(file);
+                    const item = {
+                        id: Date.now() + Math.random(),
+                        file,
+                        objectUrl,
+                        width: 0,
+                        height: 0,
+                        convertedBlob: null,
+                        convertedUrl: null,
+                        status: 'pending'
+                    };
+                    try {
+                        const img = await loadImageFromFile(file);
+                        item.width = img.width;
+                        item.height = img.height;
+                    } catch (e) {
+                        console.error('加载图片失败：', file.name, e);
+                    }
+                    items.push(item);
+                    addedCount++;
+                }
+                if (addedCount > 0 || files.length === 0) {
+                    renderList();
+                } else if (files.length > 0) {
+                    alert('所选文件均已存在列表中。');
+                }
+            }
+
+            function renderList() {
+                fileCountSpan.textContent = items.length;
+                if (items.length === 0) {
+                    fileList.innerHTML = '<div class="empty-message">暂无文件，请上传图片</div>';
+                    controlSection.style.display = 'none';
+                    downloadAllBtn.disabled = true;
+                } else {
+                    controlSection.style.display = 'block';
+                    const hasConverted = items.some(it => it.convertedBlob);
+                    downloadAllBtn.disabled = !hasConverted;
+                    fileList.innerHTML = items.map((item, index) => {
+                        const thumbSrc = item.convertedUrl || item.objectUrl;
+                        const statusClass = item.convertedBlob ? 'converted' : 'pending';
+                        const statusText = item.convertedBlob ? '已转换' : '待转换';
+                        const sizeInfo = item.width ? `${item.width}×${item.height}` : '未知尺寸';
+                        const fileSize = formatSize(item.file.size);
+                        return `
+                        <div class="file-item">
+                            <img src="${thumbSrc}" alt="预览">
+                            <div class="info">
+                                <div class="name" title="${item.file.name}">${item.file.name}</div>
+                                <div class="meta">${sizeInfo} | ${fileSize}</div>
+                            </div>
+                            <div class="status ${statusClass}">${statusText}</div>
+                            <div class="actions">
+                                ${item.convertedBlob ? `<button class="btn btn-outline" onclick="window.downloadSingle(${index})">⬇️ 下载</button>` : ''}
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
+            }
+
+            window.downloadSingle = function(index) {
+                const item = items[index];
+                if (!item || !item.convertedBlob) return;
+                const ext = targetFormat.value === 'jpeg' ? 'jpg' : targetFormat.value;
+                const fileName = item.file.name.replace(/\.[^.]+$/, '') + '.' + ext;
+                const url = URL.createObjectURL(item.convertedBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            // 开始转换
+            convertAllBtn.addEventListener('click', async () => {
+                const format = targetFormat.value;
+                convertAllBtn.disabled = true;
+                convertAllBtn.textContent = '⏳ 转换中...';
+                try {
+                    for (const item of items) {
+                        if (item.convertedBlob) continue;
+                        try {
+                            const img = await loadImageFromFile(item.file);
+                            const blob = await convertImage(img, format);
+                            item.convertedBlob = blob;
+                            if (item.convertedUrl) URL.revokeObjectURL(item.convertedUrl);
+                            item.convertedUrl = URL.createObjectURL(blob);
+                            item.status = 'converted';
+                        } catch (e) {
+                            console.error('转换失败：', item.file.name, e);
+                            item.status = 'pending';
+                        }
+                    }
+                } finally {
+                    convertAllBtn.disabled = false;
+                    convertAllBtn.textContent = '✨ 开始转换';
+                    renderList();
+                }
+            });
+
+            // 打包下载
+            downloadAllBtn.addEventListener('click', async () => {
+                const convertedItems = items.filter(it => it.convertedBlob);
+                if (convertedItems.length === 0) return;
+                const zip = new JSZip();
+                const ext = targetFormat.value === 'jpeg' ? 'jpg' : targetFormat.value;
+                for (const item of convertedItems) {
+                    const fileName = item.file.name.replace(/\.[^.]+$/, '') + '.' + ext;
+                    zip.file(fileName, item.convertedBlob);
+                }
+                const content = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `converted_${new Date().toISOString().slice(0,10)}.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            // 清空
+            clearBtn.addEventListener('click', () => {
+                items.forEach(it => {
+                    if (it.objectUrl) URL.revokeObjectURL(it.objectUrl);
+                    if (it.convertedUrl) URL.revokeObjectURL(it.convertedUrl);
+                });
+                items = [];
+                renderList();
+                fileInput.value = '';
+            });
+
+            // 上传事件
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', e => {
+                if (e.target.files.length) {
+                    addFiles(Array.from(e.target.files));
+                    fileInput.value = '';
+                }
+            });
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    addFiles(Array.from(e.dataTransfer.files));
+                }
+            });
+
+            // 初始状态
+            controlSection.style.display = 'none';
+            downloadAllBtn.disabled = true;
+        })();
+    </script>
+</body>
+</html>
