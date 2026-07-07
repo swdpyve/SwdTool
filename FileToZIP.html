@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>多文件ZIP打包 - SwdTool</title>
     <link rel="icon" href="logo.ico" sizes="any">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
             --bg: #f8f9fc;
@@ -18,6 +17,7 @@
             --accent: #4f6ef7;
             --accent-light: #eef1ff;
             --red: #ef4444;
+            --icon-color: #4f6ef7;
             --radius: 12px;
             --radius-sm: 8px;
             --shadow: 0 1px 3px rgba(0,0,0,0.06);
@@ -34,6 +34,7 @@
             --accent: #6c8cff;
             --accent-light: rgba(108,140,255,0.12);
             --red: #f87171;
+            --icon-color: #6c8cff;
         }
         *{margin:0;padding:0;box-sizing:border-box}
         body{background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh;transition:background-color 0.3s}
@@ -49,11 +50,10 @@
         .theme-toggle:hover{background:var(--accent-light);border-color:var(--accent)}
         .container{max-width:960px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
         .header{text-align:center;margin-bottom:32px}
-        .header h1{font-size:2rem;font-weight:700}
-        .header p{color:var(--text2)}
+        .header h1{font-size:2rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;}
         .upload-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:var(--transition);margin-bottom:24px;box-shadow:var(--shadow)}
         .upload-card:hover,.upload-card.dragover{border-color:var(--accent);background:var(--accent-light)}
-        .upload-icon{font-size:2.8rem;margin-bottom:12px}
+        .upload-icon{width:56px;height:56px;margin:0 auto 12px;display:block;}
         .upload-card input[type=file]{display:none}
         .file-list-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
         .table-wrapper{overflow-x:auto}
@@ -71,6 +71,7 @@
         .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto;transition:background 0.3s}
         .footer a{color:var(--text2);text-decoration:none}
         .empty-message{text-align:center;color:var(--muted);padding:32px 0}
+        .icon-img{display:inline-block;width:1.2em;height:1.2em;vertical-align:middle;}
         @media(max-width:640px){.container{padding:24px 16px}}
     </style>
 </head>
@@ -87,19 +88,22 @@
 
     <main class="container">
         <div class="header">
-            <h1>📦 多文件ZIP打包工具</h1>
+            <h1>
+                <img class="icon-img" data-filename="FileToZIP" alt="ZIP打包" width="32" height="32"
+                     onerror="this.outerHTML='<svg width=32 height=32 viewBox=\'0 0 40 40\' fill=\'none\'><path d=\'M14 8h12l6 10v12a4 4 0 01-4 4H12a4 4 0 01-4-4V18l6-10z\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linejoin=\'round\'/><path d=\'M14 8v10H8\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linejoin=\'round\'/><path d=\'M17 18v-3l3-4h2\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\'/></svg>'">
+                多文件ZIP打包工具
+            </h1>
             <p>批量选择文件 · 自动去重 · 纯前端打包 · 安全离线</p>
         </div>
 
-        <!-- 上传区域 -->
         <div class="upload-card" id="dropZone">
-            <div class="upload-icon">📂</div>
+            <img class="upload-icon" src="buttom/up.svg" alt="上传文件"
+                 onerror="this.outerHTML='<svg width=56 height=56 viewBox=\'0 0 40 40\' fill=\'none\'><path d=\'M20 8v18M14 18l6-6 6 6\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/><path d=\'M8 28v4a4 4 0 004 4h16a4 4 0 004-4v-4\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linecap=\'round\'/></svg>'">
             <strong style="display:block;margin-bottom:6px;">点击选择文件或拖拽到此处</strong>
             <span style="color:var(--muted);font-size:0.9rem;">支持任意格式，自动过滤重复文件</span>
             <input type="file" id="fileInput" multiple>
         </div>
 
-        <!-- 文件列表 -->
         <div class="file-list-card">
             <h3 style="margin-bottom:16px;">已选文件（<span id="fileCount">0</span>）</h3>
             <div class="table-wrapper">
@@ -121,13 +125,19 @@
             </div>
         </div>
 
-        <!-- 操作按钮 -->
         <div class="btn-group">
-            <button class="btn" id="packBtn" disabled>📦 一键打包下载</button>
-            <button class="btn btn-outline" id="clearBtn">🗑️ 清空数据</button>
+            <button class="btn" id="packBtn" disabled>
+                <img class="icon-img" data-filename="FileToZIP" alt="" width="16" height="16"
+                     onerror="this.outerHTML='<svg width=16 height=16 viewBox=\'0 0 40 40\' fill=\'none\'><path d=\'M14 8h12l6 10v12a4 4 0 01-4 4H12a4 4 0 01-4-4V18l6-10z\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linejoin=\'round\'/><path d=\'M14 8v10H8\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linejoin=\'round\'/></svg>'">
+                一键打包下载
+            </button>
+            <button class="btn btn-outline" id="clearBtn">
+                <img class="icon-img" data-filename="FileToZIP" alt="" width="16" height="16"
+                     onerror="this.outerHTML='<svg width=16 height=16 viewBox=\'0 0 40 40\' fill=\'none\'><path d=\'M10 12h20M16 12V8h8v4M12 12v16a4 4 0 004 4h8a4 4 0 004-4V12\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/></svg>'">
+                清空数据
+            </button>
         </div>
 
-        <!-- 使用说明 -->
         <div class="file-list-card" style="margin-top:30px;">
             <h3 style="margin-bottom:12px;">📖 使用说明</h3>
             <ul style="color:var(--text2);padding-left:20px;font-size:0.9rem;list-style-type:none;">
@@ -146,19 +156,45 @@
 
     <script>
         (function() {
-            // 主题切换
             const themeToggle = document.getElementById('themeToggle');
             const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            const applyTheme = (t) => {
-                document.documentElement.setAttribute('data-theme', t);
-                themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
-                localStorage.setItem('swdtool-theme', t);
-            };
-            applyTheme(getTheme());
-            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
 
-            // ZIP打包核心逻辑
+            function updateIcons() {
+                const currentTheme = getTheme();
+                const suffix = currentTheme === 'dark' ? '-b' : '-w';
+                document.querySelectorAll('[data-filename]').forEach(img => {
+                    const fileName = img.getAttribute('data-filename');
+                    img.src = `iconsvg/${fileName}${suffix}.svg`;
+                });
+            }
+
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    themeToggle.textContent = '☀️';
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    themeToggle.textContent = '🌙';
+                }
+                localStorage.setItem('swdtool-theme', theme);
+                updateIcons();
+            }
+
+            applyTheme(getTheme());
+
+            themeToggle.addEventListener('click', () => {
+                const newTheme = document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark';
+                applyTheme(newTheme);
+            });
+
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                    if (!localStorage.getItem('swdtool-theme')) {
+                        applyTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
+            }
+
             const fileInput = document.getElementById('fileInput');
             const dropZone = document.getElementById('dropZone');
             const fileTableBody = document.getElementById('fileTableBody');
