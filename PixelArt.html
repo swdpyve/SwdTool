@@ -45,7 +45,7 @@
         .theme-toggle:hover{background:var(--accent-light);border-color:var(--accent)}
         .container{max-width:1100px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
         .header{text-align:center;margin-bottom:32px}
-        .header h1{font-size:2rem;font-weight:700}
+        .header h1{font-size:2rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;}
         .header p{color:var(--text2)}
         .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:20px}
         .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:30px;text-align:center;cursor:pointer;transition:var(--transition);margin-bottom:20px}
@@ -72,6 +72,7 @@
         [data-theme="dark"] .btn-outline:hover{background:rgba(255,255,255,0.05)}
         .footer{border-top:1px solid var(--border);padding:20px;text-align:center;color:var(--muted);font-size:0.8rem;background:var(--surface);margin-top:auto;transition:background 0.3s}
         .footer a{color:var(--text2);text-decoration:none}
+        .icon-img{display:inline-block;width:1.2em;height:1.2em;vertical-align:middle;}
         @media(max-width:640px){.container{padding:24px 16px}.row{flex-direction:column}}
     </style>
 </head>
@@ -88,7 +89,12 @@
 
     <main class="container">
         <div class="header">
-            <h1>🎨 图片像素画工具</h1>
+            <h1>
+                <!-- 标题图标：使用外部 SVG，支持主题切换 -->
+                <img class="icon-img" data-filename="PixelArt" alt="像素画" width="32" height="32"
+                     onerror="this.outerHTML='<svg width=32 height=32 viewBox=\'0 0 40 40\' fill=\'none\'><rect x=4 y=4 width=32 height=32 rx=2 stroke=currentColor stroke-width=2.5/><rect x=8 y=8 width=8 height=8 fill=currentColor/><rect x=24 y=8 width=8 height=8 fill=currentColor/><rect x=16 y=16 width=8 height=8 fill=currentColor/><rect x=8 y=24 width=8 height=8 fill=currentColor/></svg>'">
+                图片像素画工具
+            </h1>
             <p>上传图片 · 调节像素块大小 · 指定目标分辨率 · 高清下载</p>
         </div>
 
@@ -172,16 +178,35 @@
 
     <script>
         (function() {
-            // ========== 主题切换 ==========
+            // ========== 主题与图标管理 ==========
             const themeToggle = document.getElementById('themeToggle');
             const getTheme = () => localStorage.getItem('swdtool-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            const applyTheme = (t) => {
-                document.documentElement.setAttribute('data-theme', t);
-                themeToggle.textContent = t === 'dark' ? '☀️' : '🌙';
+
+            // 更新所有带有 data-filename 属性的图标路径
+            function updateIcons() {
+                const currentTheme = getTheme();
+                const suffix = currentTheme === 'dark' ? '-b' : '-w';
+                document.querySelectorAll('[data-filename]').forEach(img => {
+                    const fileName = img.getAttribute('data-filename');
+                    img.src = `iconsvg/${fileName}${suffix}.svg`;
+                });
+            }
+
+            function applyTheme(t) {
+                if (t === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    themeToggle.textContent = '☀️';
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    themeToggle.textContent = '🌙';
+                }
                 localStorage.setItem('swdtool-theme', t);
-            };
+                // 更新图标路径
+                updateIcons();
+            }
+
             applyTheme(getTheme());
-            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+            themeToggle.addEventListener('click', () => applyTheme(document.documentElement.hasAttribute('data-theme') ? 'light' : 'dark'));
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if(!localStorage.getItem('swdtool-theme')) applyTheme(e.matches ? 'dark' : 'light'); });
 
             // ========== DOM 元素 ==========
