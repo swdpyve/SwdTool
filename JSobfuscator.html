@@ -22,8 +22,6 @@
             --radius-sm: 8px;
             --shadow: 0 1px 3px rgba(0,0,0,0.06);
             --transition: 0.2s ease;
-            --toggle-bg: #e5e7eb;
-            --toggle-dot: #ffffff;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
         }
 
@@ -40,8 +38,6 @@
             --green: #10b981;
             --red: #f87171;
             --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 1px rgba(255,255,255,0.03) inset;
-            --toggle-bg: #3a4060;
-            --toggle-dot: #6c8cff;
         }
 
         *{margin:0;padding:0;box-sizing:border-box}
@@ -139,7 +135,7 @@
 
         .container{max-width:1200px;margin:0 auto;padding:40px 24px;flex:1;width:100%}
         .header{text-align:center;margin-bottom:32px}
-        .header h1{font-size:2rem;font-weight:700;color:var(--text);transition: color 0.3s ease;}
+        .header h1{font-size:2rem;font-weight:700;color:var(--text);transition: color 0.3s ease; display:flex; align-items:center; justify-content:center; gap:10px;}
         .header p{color:var(--text2);transition: color 0.3s ease;}
         .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
         .tab-btn{
@@ -287,6 +283,7 @@
         .footer a{color:var(--text2);text-decoration:none;transition: color 0.3s ease;}
         .footer a:hover{color:var(--accent);}
 
+        .icon-img{display:inline-block;width:1.2em;height:1.2em;vertical-align:middle;}
         @media(max-width:640px){.container{padding:24px 16px}}
     </style>
 </head>
@@ -307,7 +304,12 @@
 
     <div class="container">
         <div class="header">
-            <h1>🛡️ 高级 JS 代码混淆加密</h1>
+            <h1>
+                <!-- 标题图标：使用外部 SVG，支持主题切换 -->
+                <img class="icon-img" data-filename="JSobfuscator" alt="代码混淆" width="32" height="32"
+                     onerror="this.outerHTML='<svg width=32 height=32 viewBox=\'0 0 40 40\' fill=\'none\'><path d=\'M12 10h16a4 4 0 014 4v12a4 4 0 01-4 4H12a4 4 0 01-4-4V14a4 4 0 014-4z\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linejoin=\'round\'/><path d=\'M14 16l4 4-4 4M22 24l4-4-4-4\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/></svg>'">
+                高级 JS 代码混淆加密
+            </h1>
             <p>变量混淆 · 字符串加密 · 控制流扁平化 · 死代码注入 · 调试保护 · 域名锁定</p>
         </div>
 
@@ -325,7 +327,9 @@
         <div class="tab-panel" id="panel-file">
             <div class="card">
                 <div class="upload-area" id="dropZone">
-                    <div style="font-size:2rem">📁</div>
+                    <!-- 上传图标：使用指定的 buttom/up.svg，固定路径 -->
+                    <img src="buttom/up.svg" alt="上传文件" width="32" height="32"
+                         onerror="this.outerHTML='<svg width=32 height=32 viewBox=\'0 0 40 40\' fill=\'none\'><path d=\'M20 8v18M14 18l6-6 6 6\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'/><path d=\'M8 28v4a4 4 0 004 4h16a4 4 0 004-4v-4\' stroke=\'currentColor\' stroke-width=\'2.5\' stroke-linecap=\'round\'/></svg>'">
                     <strong>点击选择 .js 文件</strong> 或拖拽到此处
                     <span style="color:var(--muted)">最大 10MB</span>
                     <input type="file" id="fileInput" accept=".js">
@@ -368,7 +372,7 @@
 
     <script>
         (function() {
-            // ========== 主题管理 ==========
+            // ========== 主题与图标管理 ==========
             const themeToggle = document.getElementById('themeToggle');
 
             function getTheme() {
@@ -380,6 +384,16 @@
                 return 'light';
             }
 
+            // 更新所有带有 data-filename 属性的图标路径
+            function updateIcons() {
+                const currentTheme = getTheme();
+                const suffix = currentTheme === 'dark' ? '-b' : '-w';
+                document.querySelectorAll('[data-filename]').forEach(img => {
+                    const fileName = img.getAttribute('data-filename');
+                    img.src = `iconsvg/${fileName}${suffix}.svg`;
+                });
+            }
+
             function applyTheme(theme) {
                 if (theme === 'dark') {
                     document.documentElement.setAttribute('data-theme', 'dark');
@@ -389,6 +403,8 @@
                     themeToggle.textContent = '🌙';
                 }
                 localStorage.setItem('swdtool-theme', theme);
+                // 更新图标路径
+                updateIcons();
             }
 
             // 初始化
